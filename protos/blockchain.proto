@@ -1,0 +1,88 @@
+syntax = "proto3";
+
+option java_package = "fr.unistra.blockchain";
+option objc_class_prefix = "BC";
+
+package blockchain;
+
+// Represents an empty message.
+// Used in cases when request or response does not require any data to be sent.
+message Empty {
+}
+
+
+// Holds network information about a single node (peer) in the network.
+message Node {
+    int32 ip_address = 1; // IP address of the node
+    int32 port = 2; // Port on which the node is listening
+    int32 address = 3; // Coin address of the node
+}
+
+
+// Represents an input of a transaction.
+// An input of a valid transaction must refer to a specific unspent output
+// of one of the previous transactions (pair: tx, idx).
+// An exception is the coinbase transaction of a block, which creates coins by
+// itself and requires no inputs.
+message TransactionInput {
+    bytes src_tx_hash = 1; // hash of the source transaction
+    int32 src_idx = 2; // index of the output in source the source transaction
+    bytes signature = 3; // crypto-signature of the owner
+}
+
+
+// Represents an output of a transaction.
+message TransactionOutput {
+    int32 amount = 1; // amount of coins to transfer
+    bytes key = 2; // public key that confirns ownership
+}
+
+
+// Represents a transaction.
+// Transaction is a way to transfer coins between owners.
+// It is  defined by a set of inputs and outputs and is reffered to by its hash.
+message Transaction {
+    int32 version = 1; // protocol version
+    bytes hash = 2; // hash of this transaction
+    int32 num_inputs = 3; // number of inputs in this transaction
+    int32 num_outputs = 4; // number of outputs in this transaction
+    repeated TransactionInput inputs = 6; // inputs
+    repeated TransactionOutput outputs = 7; // outputs
+}
+
+// Block is a single unit of a blockchain.
+// Every block contains a set of transactions (including coinbase
+// transaction) organised into Merkle tree.
+message Block {
+    int32 version = 1; // protocol version
+    bytes hash = 2; // target hash of this block
+    int32 difficulty = 3; // target difficulty of the puzzle
+    int32 nonce = 4; // nonce that complements original block hash to target hash
+    bytes merkle_root = 5; // root of the Merkle tree of transactions
+    int32 num_tx = 6; // number of transactions in this block
+    repeated Transaction tx = 8; // array of transactions
+    repeated bytes merkle_tree = 9; // Merkle tree of transaction hashes
+}
+
+
+// Describes methods of the blockchain service
+service Blockchain {
+    // A node advertises to its peer nodes one or more of the new transactions
+    // or transactions it has heard about previously.
+    rpc send_transactions (stream Transaction) returns (Empty) {}
+
+    // A node requests another node to send known transactions.
+    rpc get_transactions (Empty) returns (stream Transaction) {}
+
+    // A node proposes one or more blocks to its peer nodes
+    rpc send_blocks (stream Block) returns (Empty) {}
+
+    // A node requests another node to send known blocks.
+    rpc get_nodes (Empty) returns(stream Block) {}
+
+    // A node requests information about peer nodes from another peer
+    rpc get_peers (Empty) returns (stream Node) {}
+
+    // A node sends information about peer nodes from another peer
+    rpc send_peers (stream Node) returns (Empty) {}
+}

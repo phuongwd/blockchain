@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -e
+
+# Prepares shell environment for running blockchain nodes
+
+export CURR_DIR="$(cd $(dirname "${BASH_SOURCE[0]}"); pwd)"
+
+# Activate virtual environment
+source "${CURR_DIR}/../bc/bin/activate"
