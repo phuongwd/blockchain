@@ -10,12 +10,11 @@ import os
 
 def resolve_parent_path(p):
     """
-    Resolves absolute parent directory path of a file or a diretory
+    Resolves absolute path of the parent directory of a given file or diretory
 
     :param p:   file or directory path to resolve
     :return:    absolute parent directory path
     """
-
     realpath = os.path.realpath(p)
     if os.path.isdir(realpath):
         return realpath

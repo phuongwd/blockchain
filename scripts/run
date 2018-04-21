@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+export CURR_DIR="$(cd $(dirname "${BASH_SOURCE[0]}"); pwd)"
+
+source "${CURR_DIR}/prepare_env"
+
+if [ -z "${1}" ]; then
+    echo "usage ${0} <app> [...args]"
+fi
+
+pushd "${CURR_DIR}/../${1}"
+
+if [ -z "${NODEMON}" ]; then
+    python3 main.py ${@:2}
+else
+    if [ "${1}" != "dns_seeder" ]; then
+        MS=$(printf "0.%04d\n" $(( RANDOM % 1000 )))
+        WAIT="sleep ${MS} && "
+    fi
+
+    "${NODEMON}" \
+    --ext py,proto \
+    --watch "${CURR_DIR}/../" \
+    --exec bash -c "${WAIT} python3 main.py ${@:2}"
+fi
+
+popd
+
+

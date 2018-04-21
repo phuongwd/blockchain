@@ -5,12 +5,10 @@ from __future__ import (
     absolute_import, division, print_function, unicode_literals
 )
 
-import time
+__all__ = ["peer", "seeder", "node"]
 
+from rpc.peer import Peer
+from rpc.seeder import Seeder
 
-def wait_forever():
-    """
-    Makes caller thread to wait forever
-    """
-    while True:
-        time.sleep(2 ** 63)
+from rpc.node import messages, BlockchainNode
+

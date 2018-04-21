@@ -5,5 +5,8 @@ set -e
 
 export CURR_DIR="$(cd $(dirname "${BASH_SOURCE[0]}"); pwd)"
 
+# Add current dir to python module search path
+export PYTHONPATH=${CURR_DIR}/../${PYTHONPATH:+:PYTHONPATH}
+
 # Activate virtual environment
 source "${CURR_DIR}/../bc/bin/activate"

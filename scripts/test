@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -e
+
+# Runs all unit tests
+
+export CURR_DIR="$(cd $(dirname "${BASH_SOURCE[0]}"); pwd)"
+
+source "${CURR_DIR}/prepare_env"
+
+pytest -v

@@ -13,7 +13,7 @@ message Empty {
 
 // Holds network information about a single node (peer) in the network.
 message Node {
-    int32 ip_address = 1; // IP address of the node
+    string host = 1; // IP address of the node
     int32 port = 2; // Port on which the node is listening
     int32 address = 3; // Coin address of the node
 }
@@ -25,7 +25,7 @@ message Node {
 // An exception is the coinbase transaction of a block, which creates coins by
 // itself and requires no inputs.
 message TransactionInput {
-    bytes src_tx_hash = 1; // hash of the source transaction
+    bytes src_hash = 1; // hash of the source transaction
     int32 src_idx = 2; // index of the output in source the source transaction
     bytes signature = 3; // crypto-signature of the owner
 }
@@ -34,7 +34,7 @@ message TransactionInput {
 // Represents an output of a transaction.
 message TransactionOutput {
     int32 amount = 1; // amount of coins to transfer
-    bytes key = 2; // public key that confirns ownership
+    bytes key = 2; // public key which confirms the ownership
 }
 
 
@@ -44,10 +44,9 @@ message TransactionOutput {
 message Transaction {
     int32 version = 1; // protocol version
     bytes hash = 2; // hash of this transaction
-    int32 num_inputs = 3; // number of inputs in this transaction
-    int32 num_outputs = 4; // number of outputs in this transaction
-    repeated TransactionInput inputs = 6; // inputs
-    repeated TransactionOutput outputs = 7; // outputs
+    uint32 extra_nonce = 3; // extra nonce for coinbase transaction
+    repeated TransactionInput inputs = 4; // inputs
+    repeated TransactionOutput outputs = 5; // outputs
 }
 
 // Block is a single unit of a blockchain.
@@ -55,13 +54,12 @@ message Transaction {
 // transaction) organised into Merkle tree.
 message Block {
     int32 version = 1; // protocol version
-    bytes hash = 2; // target hash of this block
-    int32 difficulty = 3; // target difficulty of the puzzle
-    int32 nonce = 4; // nonce that complements original block hash to target hash
-    bytes merkle_root = 5; // root of the Merkle tree of transactions
-    int32 num_tx = 6; // number of transactions in this block
-    repeated Transaction tx = 8; // array of transactions
-    repeated bytes merkle_tree = 9; // Merkle tree of transaction hashes
+    bytes hash = 2; // hash of this block, including nonce
+    bytes hash_prev = 3; // hash of the previous block in the blockchain
+    int32 difficulty = 4; // target difficulty of the puzzle
+    uint32 nonce = 5; // nonce that complements original block hash to target hash
+    bytes merkle_root = 6; // root of the Merkle tree of transactions
+    repeated Transaction transactions = 7; // array of transactions
 }
 
 
