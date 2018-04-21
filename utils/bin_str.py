@@ -8,12 +8,13 @@ from __future__ import (
 import sys
 
 
-def bin_str(x: int, n: int = 32):
+def bin_str(x: int, pad: int, n: int = 32):
     """
-    Converts an integer x into its binary representation as string, taking
-    fitst n most significant bits.
+    Converts an integer `x` into its binary representation as string,
+    zero-padding to length `pad` and taking fitst `n` most significant bits
+    (truncating the rest with ellipsis).
     """
-    s = "{:0128b}".format(x)
+    s = "{x:0{pad}b}".format(pad=pad, x=x)
 
     if n < len(s):
         # Position of most significant bits is different
@@ -23,6 +24,7 @@ def bin_str(x: int, n: int = 32):
         elif sys.byteorder == "big":
             return s[len(s) - n:] + "..."
 
-        raise SystemError("Unrecognized endianness: \"{:}\"".format(sys.byteorder))
+        raise SystemError("Unrecognized byte order: \"{:}\""
+                          .format(sys.byteorder))
 
     return s

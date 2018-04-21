@@ -14,7 +14,7 @@ import protol
 from blockchain import (
     Transaction, TransactionOutput, md5, MerkleTree
 )
-from utils import bin_str, bytes_to_int
+from utils import bin_str, bytes_to_int, create_target
 from utils.int_to_bytes import int_to_bytes
 
 COINBASE_AMOUNT = 25
@@ -31,7 +31,7 @@ class Block:
     ):
         self._hash_prev = hash_prev
         self._difficulty = difficulty
-        self._target = 2 ** (128 - self._difficulty + 1) - 1
+        self._target = create_target(hash_f.bits, difficulty)
         self._hash_f = hash_f
 
         # Prepend conbase transaction
@@ -106,7 +106,7 @@ class Block:
         pass
 
     def mine_one(self):
-        hash = self._hash_f(self._bytes + bytes(self._nonce))
+        hash = self._hash_f(self._bytes + int_to_bytes(self._nonce))
 
         # If target is meet, we found the nonce
         if bytes_to_int(hash) < self.target:
