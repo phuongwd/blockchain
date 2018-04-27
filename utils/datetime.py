@@ -5,12 +5,8 @@ from __future__ import (
     absolute_import, division, print_function, unicode_literals
 )
 
-import time
+from time import strftime
 
 
-def wait_forever():
-    """
-    Makes caller thread to wait forever
-    """
-    while True:
-        time.sleep(60)
+def datetime():
+    return strftime("%Y-%m-%d %H:%M:%S")

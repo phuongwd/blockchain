@@ -6,6 +6,15 @@ from __future__ import (
 )
 
 
+def format_peer(peer):
+    s = "{:}:{:}".format(peer.host, peer.port)
+
+    if peer.address is not None:
+        s += "/{:}".format(peer.address)
+
+    return s
+
+
 class Peer:
     def __init__(self, host, port, address, stub):
         self._host = host
@@ -29,8 +38,13 @@ class Peer:
     def stub(self):
         return self._stub
 
+    def __eq__(self, other):
+        return self.host == other.host \
+               and self.port == other.port \
+               and self.address == other.address
+
     def __str__(self):
-        return "{:}:{:}/{:}".format(self._host, self._port, self._address)
+        return format_peer(self)
 
     def __repr__(self):
         return self.__str__()

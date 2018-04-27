@@ -101,7 +101,8 @@ class Block:
             transactions=[tx.to_proto() for tx in self._transactions]
         )
 
-    def from_proto(self, block):
+    @staticmethod
+    def from_proto(block):
         # TODO
         pass
 

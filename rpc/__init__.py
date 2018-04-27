@@ -5,10 +5,9 @@ from __future__ import (
     absolute_import, division, print_function, unicode_literals
 )
 
-__all__ = ["peer", "seeder", "node"]
+__all__ = ["Peer", "format_peer", "Seeder", "messages", "BlockchainNode"]
 
-from rpc.peer import Peer
+from rpc.peer import Peer, format_peer
 from rpc.seeder import Seeder
-
 from rpc.node import messages, BlockchainNode
 

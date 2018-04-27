@@ -7,19 +7,23 @@ from __future__ import (
 
 import os
 from concurrent import futures
+from threading import Lock
+from typing import Iterable
 
 import grpc
 import protol
 import dotenv
 
-from rpc import Peer, Seeder
-from utils import wait_forever
+from rpc import Peer, Seeder, format_peer
+from utils import wait_forever, console
 
-ENV_PATH = os.path.join("..", ".env")
+CURRENT_PATH = os.path.abspath(os.path.dirname(__file__))
+
+ENV_PATH = os.path.join(CURRENT_PATH, "..", ".env")
 dotenv.load_dotenv(dotenv_path=ENV_PATH)
 
-PROTO_PATH = os.path.join("..", "protos", "blockchain.proto")
-SERVICE_NAME = os.getenv("SERVICE_NAME") or "BC"
+PROTO_PATH = os.path.join(CURRENT_PATH, "..", "protos", "blockchain.proto")
+SERVICE_NAME = os.getenv("SERVICE_NAME") or "Blockchain"
 
 
 def load_service(proto_path, service_name):
@@ -63,6 +67,7 @@ class BlockchainNode(Servicer):
         self._server = grpc.server(futures.ThreadPoolExecutor(max_workers))
         add_service(self, self._server)
         self._server.add_insecure_port("{:}:{:}".format(host, port))
+        self._print_lock = Lock()
 
         self._address = 0
         self._this_node = self._messages.Node(
@@ -72,11 +77,17 @@ class BlockchainNode(Servicer):
         self._known_seeders = []
         self._known_peers = []
 
+    def _log(self, *args):
+        self._print_lock.acquire()
+        console.log("{:}:{:5d} | ".format(self._host, self._port), *args)
+        self._print_lock.release()
+
     def start(self):
         """
         Starts the server
         """
         self._server.start()
+        self._log("Listening on port {:}".format(self._port))
 
     def stop(self):
         """
@@ -90,32 +101,36 @@ class BlockchainNode(Servicer):
         """
 
         self.start()
-        print("Listening on port {:}".format(self._port))
 
         try:
             wait_forever()
         except KeyboardInterrupt:
             self.stop()
 
-    @staticmethod
-    def peer_iterator(peers):
+    def peer_iterator(self, peers: Iterable[Peer]):
         for peer in peers:
             yield peer
 
-    def send_known_peers_to(self, peer):
+    def send_known_peers_to(self, peer: Peer, include_self: bool):
         known_peers = [
             self._messages.Node(
-                host=peer.host,
-                port=peer.port,
-                address=peer.address
+                host=p.host,
+                port=p.port,
+                address=p.address
             )
-            for peer in self._known_peers
-        ]
-        peer.stub.send_peers(
-            self.peer_iterator([self._this_node] + known_peers)
-        )
 
-    def connect_to(self, host, port):
+            for p in self._known_peers
+        ]
+
+        if include_self:
+            known_peers += [self._this_node]
+
+        if len(known_peers) > 0:
+            peer.stub.send_peers(
+                self.peer_iterator(known_peers)
+            )
+
+    def connect_to(self, host: str, port: int):
         """
         Connects as a gRPC client to a given gRPC server
 
@@ -124,33 +139,33 @@ class BlockchainNode(Servicer):
 
         :return: Stub of the service connected to the specified server
         """
-        print("Connecting to: {:}:{:}".format(host, port))
+        self._log("Connecting to: {:}:{:}".format(host, port))
         return Stub(grpc.insecure_channel("{:}:{:}".format(host, port)))
 
     def add_peer(self, host, port, address):
         stub = self.connect_to(host, port)
         peer = Peer(host, port, address, stub)
-        print("Adding peer: {:}".format(peer))
+        self._log("Adding peer: {:}".format(peer))
         self._known_peers.append(peer)
         return peer
 
     def add_seeder(self, host, port):
         stub = self.connect_to(host, port)
         seeder = Seeder(host, port, stub)
-        print("Adding seeder: {:}".format(seeder))
+        self._log("Adding seeder: {:}".format(seeder))
         self._known_seeders.append(seeder)
         return seeder
 
     def is_known_peer(self, peer):
-        # print("is_known_peer _this_node: {:}:{:}/{:}".format(
+        # self._log("is_known_peer _this_node: {:}:{:}/{:}".format(
         #     self._this_node.host, self._this_node.port, self._this_node.address
         # ))
         #
-        # print("is_known_peer peer: {:}:{:}/{:}".format(
+        # self._log("is_known_peer peer: {:}:{:}/{:}".format(
         #     peer.host, peer.port, peer.address
         # ))
         #
-        # print("is_known_peer equal: {:}:{:}/{:}".format(
+        # self._log("is_known_peer equal: {:}:{:}/{:}".format(
         #     peer.host == self._this_node.host,
         #     peer.port == self._this_node.port,
         #     peer.address == self._this_node.address
@@ -162,7 +177,7 @@ class BlockchainNode(Servicer):
         """
         Server handler that sends known peers in respond to `get_peers` request
         """
-        print("Received  get_peers request")
+        self._log("Received  get_peers request")
         for peer in self._known_peers:
             yield self._messages.Node(
                 host=peer.host,
@@ -174,9 +189,9 @@ class BlockchainNode(Servicer):
         """
         Server handler that accepts peers on `send_peers` request
         """
-        print("Received send_peers request")
+        self._log("Received send_peers request")
         for peer in peers:
-            print("Received peer: {:}".format(peer))
+            self._log("Received peer: {:}".format(format_peer(peer)))
 
             if not self.is_known_peer(peer):
                 peer = self.add_peer(peer.host, peer.port, peer.address)

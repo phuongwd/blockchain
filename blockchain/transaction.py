@@ -25,6 +25,8 @@ class Transaction:
         self._outputs = outputs
         self._extra_nonce = 0
 
+        self._fee = 0
+
         self._hash_f = hash_f
         self._hash = None
         self.update()
@@ -41,6 +43,10 @@ class Transaction:
     def bytes(self):
         return self._reduce(self._inputs) + self._reduce(self._outputs) \
                + bytes([self.extra_nonce])
+
+    @property
+    def fee(self):
+        return self._fee
 
     @property
     def hash(self):

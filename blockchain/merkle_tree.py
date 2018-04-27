@@ -5,21 +5,25 @@ from __future__ import (
     absolute_import, division, print_function, unicode_literals
 )
 
-from typing import Callable, List, Any
+from typing import Any, Callable, List, TypeVar
+
+T = TypeVar('T')
+U = TypeVar('U')
 
 
 class MerkleTree:
     def __init__(
             self,
-            leaves: List[Any],
-            f_hash: Callable[[Any], Any],
-            f_reduce: Callable[[Any, Any], Any] = lambda x, y: x + y
+            leaves: List[T] = None,
+            f_hash: Callable[[U], bytes] = lambda x: bytes(x),
+            f_reduce: Callable[[T, T], U] = lambda x, y: x + y
     ):
         """
         Implments "Merkle tree" data structure. Merkle tree is a variation of
-        hash trees. It allows for inclusion tests (that is, checkin whether a
-        given element is present) in log(N) time, given only the hash value
-        of the element.
+        hash trees. It :
+         - summarizes the data and allows to verify its integrity
+         - allows for fast inclusion tests (that is, checking whether a
+        given element is present)
 
         See also: https://en.wikipedia.org/wiki/Merkle_tree
 
@@ -33,12 +37,12 @@ class MerkleTree:
         # then applies the hash function to that output
         self._f_reduce_hash = lambda x, y: f_hash(f_reduce(x, y))
 
-        self._leaves = leaves
+        self._leaves = leaves or []
         self._root_hash = None
         self._dirty = True
 
     @staticmethod
-    def pairs(a: List[Any]):
+    def pairs(a: List[T]):
         """
         Converts  a list of values into a list of pairwise groups of
         neighbor elements. If the number of elements is odd, the result is
@@ -58,7 +62,7 @@ class MerkleTree:
 
         return pairs
 
-    def reduce_one_level(self, a: List[Any]):
+    def reduce_one_level(self, a: List[T]):
         pairs = MerkleTree.pairs(a)
         return [self._f_reduce_hash(x, y) for x, y in pairs]
 
@@ -72,11 +76,11 @@ class MerkleTree:
 
         return hashes[0]
 
-    def add_leaf(self, leaf: Any):
+    def add_leaf(self, leaf: T):
         self._leaves.append(leaf)
         self._dirty = True
 
-    def add_leaves(self, leaves: List[Any]):
+    def add_leaves(self, leaves: List[T]):
         if self._leaves is None:
             self._leaves = leaves
         else:

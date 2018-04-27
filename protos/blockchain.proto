@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 option java_package = "fr.unistra.blockchain";
-option objc_class_prefix = "BC";
+option objc_class_prefix = "Blockchain";
 
 package blockchain;
 
@@ -76,7 +76,7 @@ service Blockchain {
     rpc send_blocks (stream Block) returns (Empty) {}
 
     // A node requests another node to send known blocks.
-    rpc get_nodes (Empty) returns(stream Block) {}
+    rpc get_blocks (Empty) returns(stream Block) {}
 
     // A node requests information about peer nodes from another peer
     rpc get_peers (Empty) returns (stream Node) {}

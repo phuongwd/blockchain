@@ -5,12 +5,8 @@ from __future__ import (
     absolute_import, division, print_function, unicode_literals
 )
 
-import time
+from blockchain import Transaction
 
 
-def wait_forever():
-    """
-    Makes caller thread to wait forever
-    """
-    while True:
-        time.sleep(60)
+def favor_higher_fees(tx1: Transaction, tx2: Transaction) -> bool:
+    return tx1.fee > tx2.fee
