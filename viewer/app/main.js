@@ -42,10 +42,10 @@ nextjs_app.prepare()
     // Add convenience function to send JSON reply
     app.use(sendJson)
 
-    // Add AJAX request detection for betetr logging
+    // Add AJAX request detection for better logging
     app.use(isXhr)
 
-    // Add _client IP to request for betetr logging
+    // Add client IP to request for better logging
     app.use((req, res, next) => {
       req.srcIP = clientIP(req)
       return next()
@@ -73,14 +73,14 @@ nextjs_app.prepare()
       return express.static(path, { index: false })
     }
 
-    app.use('/', staticHandler('.build/_client'))
-    app.use('/_next/static', staticHandler('.build/_client/static'))
+    app.use('/', staticHandler('.build/client'))
+    app.use('/_next/static', staticHandler('.build/client/static'))
 
-    app.use('/_next/-', staticHandler('.build/_client'))
-    app.use('/_next/*/-', staticHandler('.build/_client'))
+    app.use('/_next/-', staticHandler('.build/client'))
+    app.use('/_next/*/-', staticHandler('.build/client'))
 
-    app.use('/_next/-/page', staticHandler('.build/_client/bundles/pages'))
-    app.use('/_next/*/-/page', staticHandler('.build/_client/bundles/pages'))
+    app.use('/_next/-/page', staticHandler('.build/client/bundles/pages'))
+    app.use('/_next/*/-/page', staticHandler('.build/client/bundles/pages'))
 
     // Serve Next.js dynamic content
     const nextjs_handler = nextjsRoutes.getRequestHandler(

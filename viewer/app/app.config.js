@@ -60,7 +60,7 @@ if(config.USE_SSL && config.USE_SSL !== 0) {
 }
 
 // WARNING!!!
-// This is the part of the config that will be exposed to the _client-side
+// This is the part of the config that will be exposed to the client-side
 // JavaScript. Do not put any secrets here!
 process.env['configClient'] = JSON.stringify({
   APP_NAME: config.APP_NAME,
