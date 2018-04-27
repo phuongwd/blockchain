@@ -1,0 +1,42 @@
+html, body {
+  height: 100% !important;
+  min-height: 100% !important;
+  margin: 0;
+  font-family: $font-family-default;
+  color: $font-color-default;
+  font-smoothing: antialiased !important;
+  font-smooth: always !important;
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+}
+
+img {
+  user-select: none !important;
+  user-drag: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  -webkit-user-select: none !important;
+  -webkit-user-drag: none !important;
+  -webkit-touch-callout: none !important;
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+textarea:-webkit-autofill:active,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus,
+select:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px white inset !important;
+}
+
+#__next > div > div > pre,
+#__next-error > div > pre,
+#__next-error > div > div > pre {
+  border: 0 !important;
+}

@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+
+set -e
+
+export CURR_DIR=$(cd $(dirname "${BASH_SOURCE[0]}"); pwd)
+source "${CURR_DIR}/prepare_env"
+
+# Installs into current directory: Node.js, npm and required modules
+# If fails, try `clean` script first
+
+
+printf "\nInstalling Node.js ${NODE_VERSION}\n"
+
+# If there is no node.js directory
+if [ ! -d "${NODE_DIR}" ]; then
+
+  # Cleanup everything
+  source ${CURR_DIR}/prepare_env
+
+  # If there is no archive downloaded, download it
+  if [ ! -f "${TMP_DIR}/${ARCHIVE_NAME}" ]; then
+      mkdir -p "${TMP_DIR}"
+      wget "${URL}" -O "${TMP_DIR}/${ARCHIVE_NAME}"
+  fi
+
+  # If there is no directory of unpacked archive, unpack
+  if [ ! -d "${TMP_DIR}/${PACKAGE_NAME}" ]; then
+
+      pushd ${TMP_DIR}
+        tar -xf "${ARCHIVE_NAME}"
+      popd
+
+      # Rename directory
+      mv "${TMP_DIR}/${PACKAGE_NAME}" "${NODE_DIR}"
+  fi
+fi
+
+printf "\nInstalling npm and yarn\n"
+npm install -g npm yarn
+
+printf "\nInstalling dependencies\n"
+yarn install
+
+
+printf "\
+\n \
+Don't forget to configure the app! \
+Create a .env file in the viewer/ directory. \
+See example config in .env.example. \
+\n"

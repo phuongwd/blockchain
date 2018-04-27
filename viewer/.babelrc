@@ -1,0 +1,61 @@
+{
+  "presets": [
+    [
+      "@babel/preset-env",
+      {
+        "targets": {
+          "browsers": [
+            "defaults",
+            "since 2015",
+            ">0.5%",
+            "firefox esr"
+          ],
+          "node": "8"
+        }
+      }
+    ],
+    [
+      "@babel/preset-react",
+      {}
+    ],
+    [
+      "next/babel",
+      {
+        "styled-jsx": {
+          "plugins": [
+            [
+              "styled-jsx-plugin-sass",
+              {
+                "sassOptions": {
+                  "includePaths": [
+                    "./node_modules/",
+                    "./client/styles/"
+                  ]
+                }
+              }
+            ]
+          ]
+        }
+      }
+    ]
+  ],
+  "plugins": [
+    "@babel/plugin-proposal-class-properties",
+    "@babel/plugin-proposal-object-rest-spread",
+    "@babel/plugin-transform-runtime"
+  ],
+  "env": {
+    "production": {
+      "presets": [
+      ],
+      "plugins": [
+      ]
+    },
+    "development": {
+      "presets": [
+      ],
+      "plugins": [
+      ]
+    }
+  }
+}

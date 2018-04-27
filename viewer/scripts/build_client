@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+set -e
+
+export CURR_DIR=$(cd $(dirname "${BASH_SOURCE[0]}"); pwd)
+source "${CURR_DIR}/prepare_env"
+
+# Builds the client part of the production version of the app
+
+export NODE_ENV=production
+export BABEL_ENV=${NODE_ENV}
+
+OUT_DIR=".build/client"
+IN_DIR="client"
+
+rm -rf "${OUT_DIR}/*"
+mkdir -p "${OUT_DIR}"
+
+next build "${IN_DIR}/"

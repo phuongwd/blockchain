@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+
+set -e
+shopt -s dotglob
+export CURR_DIR=$(cd $(dirname "${BASH_SOURCE[0]}"); pwd)
+source "${CURR_DIR}/prepare_env"
+
+# Starts the development server
+# (in debug mode, with auto-restart and with hot reload)
+
+export NODE_ENV=development
+export BABEL_ENV=${NODE_ENV}
+export NODE_TLS_REJECT_UNAUTHORIZED=0
+
+
+OUT_DIR_CLIENT=".build/client"
+OUT_DIR_SERVER=".build/server"
+
+rm -rf "${OUT_DIR_CLIENT}/*"
+rm -rf "${OUT_DIR_SERVER}/*"
+
+# Nodemon will restart the development server on changes in server code,
+# so that we don't have to
+nodemon \
+--watch .babelrc \
+--watch .env \
+--watch package.json \
+--watch yarn.lock \
+--watch package-lock.json \
+--watch app/ \
+--watch client/pages/_app.js \
+--watch client/pages/_document.js \
+--watch client/pages/_error.js \
+--watch client/next.config.js \
+--watch client/next.routes.js \
+--watch client/page_list.js \
+--watch client/status.js \
+--watch client/error.js \
+--watch common/ \
+--exec \
+babel-node --trace-warnings app/main.js

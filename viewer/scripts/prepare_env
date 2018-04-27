@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+set -e
+
+export CURR_DIR=$(cd $(dirname "${BASH_SOURCE[0]}"); pwd)
+
+
+# Prepares shell environment for building/running the app
+
+export NODE_VERSION=8.11.1 # Version of Node.js to install
+export TMP_DIR="${CURR_DIR}/../.tmp"
+
+PACKAGE_NAME="node-v${NODE_VERSION}-linux-x64"
+ARCHIVE_NAME="${PACKAGE_NAME}.tar.xz"
+URL="https://nodejs.org/dist/v${NODE_VERSION}/${ARCHIVE_NAME}"
+export NODE_DIR="${CURR_DIR}/../node"
+export PATH="${NODE_DIR}/bin:${CURR_DIR}/../node_modules/.bin${PATH:+:$PATH}"

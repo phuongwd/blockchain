@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+set -e
+
+export CURR_DIR=$(cd $(dirname "${BASH_SOURCE[0]}"); pwd)
+source "${CURR_DIR}/prepare_env"
+
+# Lauches production build of the app
+
+export NODE_ENV=production
+export BABEL_ENV=${NODE_ENV}
+export NODE_TLS_REJECT_UNAUTHORIZED=0
+
+node .build/server/app/main.js

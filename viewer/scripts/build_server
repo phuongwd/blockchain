@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+set -e
+
+export CURR_DIR=$(cd $(dirname "${BASH_SOURCE[0]}"); pwd)
+source "${CURR_DIR}/prepare_env"
+
+# Builds the server part of the production version of the app
+
+export NODE_ENV=production
+export BABEL_ENV=${NODE_ENV}
+
+OUT_DIR=".build/server"
+IN_DIRS=("app" "client" "common")
+
+rm -rf "${OUT_DIR}/*"
+mkdir -p "${OUT_DIR}"
+
+for d in "${IN_DIRS[@]}"
+do
+  echo "Building ${d}/"
+  babel \
+  --source-maps both \
+  --retain-lines \
+  --compact \
+  --minified \
+  --out-dir "${OUT_DIR}/${d}" \
+  "${d}"
+done
