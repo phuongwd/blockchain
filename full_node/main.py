@@ -15,6 +15,9 @@ HOST = "localhost"
 DNS_SEED_HOST = "localhost"
 DNS_SEED_PORT = os.getenv("DNS_SEED_PORT") or 54152
 
+VIEWER_HOST = "localhost"
+VIEWER_PORT = os.getenv("VIEWER_PORT") or 12345
+
 
 def main():
     host_port = sys.argv[1]
@@ -23,7 +26,7 @@ def main():
     node = FullNode(
         host=host or "localhost",
         port=int(port),
-        seeders=[(DNS_SEED_HOST, DNS_SEED_PORT)],
+        seeders=[(DNS_SEED_HOST, DNS_SEED_PORT), (VIEWER_HOST, VIEWER_PORT)],
         max_workers=3
     )
 
