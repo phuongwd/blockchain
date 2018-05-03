@@ -1,7 +1,8 @@
 const path = require('path')
 const utils = require('util')
 
-const _ = require('lodash')
+import _ from 'lodash'
+
 const CopyWebpackPlugin = require('copy-webpack-plugin')
 const withSass = require('@zeit/next-sass')
 
@@ -41,7 +42,7 @@ let config = {
 
   webpack: async (config, { dev, isServer }) => {
     if(dev) {
-      config.devtool = 'cheap-module-source-map'
+      config.devtool = 'cheap-module-eval-source-map'
       config.output.crossOriginLoading = 'anonymous'
     }
 

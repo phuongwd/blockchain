@@ -46,5 +46,5 @@ printf "\
 \n \
 Don't forget to configure the app! \
 Create a .env file in the viewer/ directory. \
-See example config in .env.example. \
+See example config in .env.defaults. \
 \n"

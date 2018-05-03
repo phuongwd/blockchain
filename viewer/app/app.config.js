@@ -1,7 +1,20 @@
-import dotenv from 'dotenv'
 import path from 'path'
 
+import _ from 'lodash'
+
+const dotenv = require('dotenv')
 dotenv.config()
+
+const dotenvExtended = require('dotenv-extended')
+const dotenvParseVariables = require('dotenv-parse-variables')
+
+let envFromFile = dotenvExtended.load({
+  silent: false,
+})
+
+const env = dotenvParseVariables(_.merge({}, process.env, envFromFile))
+
+const rootDir = path.join(__dirname, '..')
 
 const modes = {
   production: 'production',
@@ -9,54 +22,60 @@ const modes = {
   testing: 'testing',
 }
 
-const MODE = process.env.NODE_ENV ? process.env.NODE_ENV.toLowerCase() : 'production'
+const MODE = env.NODE_ENV ? env.NODE_ENV.toLowerCase() : 'production'
 const IS_DEVELOPMENT = MODE === modes.development
 const IS_PRODUCTION = MODE === modes.production
 const IS_TESTING = MODE === modes.testing
 
 let config = {
-  APP_NAME: 'blockchain-visualization',
-  APP_NAME_FRIENDLY: 'Visual Blockchain',
+  APP_NAME: env.APP_NAME,
+  APP_NAME_FRIENDLY: env.APP_NAME_FRIENDLY,
 
   PUBLIC_PAGES: [
     '/',
     '/about',
   ],
 
-  HTTP_PORT: process.env.HTTP_PORT,
-  HTTP_HOST: process.env.HTTP_HOST,
+  HTTP_PORT: `${env.HTTP_PORT}`,
+  HTTP_HOST: env.HTTP_HOST,
 
-  USE_SSL: process.env.USE_SSL,
+  USE_SSL: env.USE_SSL,
 
   MODE,
   IS_DEVELOPMENT,
   IS_PRODUCTION,
   IS_TESTING,
 
-  STATIC_DIR: path.join(__dirname, '../static'),
-
-  LOG_DIR: process.env.LOG_DIR || path.join(__dirname, '../log'),
-  LOG_ACCESS: process.env.LOG_ACCESS || 'access.log',
-  LOG_ACCESS_VERBOSE: process.env.LOG_ACCESS_VERBOSE || false,
+  ROOT_DIR: rootDir,
+  STATIC_DIR: path.join(rootDir, 'static'),
+  // LOG_DIR: env.LOG_DIR || path.join(rootDir, 'log'),
+  // LOG_ACCESS: env.LOG_ACCESS || 'access.log',
+  // LOG_ACCESS_VERBOSE: env.LOG_ACCESS_VERBOSE || false,
 
   PROTOCOL: 'http://',
-  HOST: 'http://' + process.env.HOST,
-  SERVER_ROOT: 'http://' + process.env.HOST,
-  API_ROOT: 'http://' + process.env.HOST + '/api',
+  HOST: 'http://' + env.HOST,
+  SERVER_ROOT: 'http://' + env.HOST,
+  API_ROOT: 'http://' + env.HOST + '/api',
+
+  GRPC_PROTO_PATH: env.GRPC_PROTO_PATH,
+  GRPC_SERVICE_NAME: env.GRPC_SERVICE_NAME,
+  GRPC_PACKAGE_NAME: env.GRPC_PACKAGE_NAME,
+  GRPC_SERVER_HOST: env.GRPC_SERVER_HOST,
+  GRPC_SERVER_PORT: env.GRPC_SERVER_PORT,
+
+  WEBSOCKET_URL: `ws://${env.HOST}/`,
+  WEBSOCKET_PROTOCOL: `${env.APP_NAME.toLowerCase()}-protocol`,
 }
 
-if(config.USE_SSL && config.USE_SSL !== 0) {
-  config = {
-    ...config,
-
+if(config.USE_SSL) {
+  config = _.merge(config, {
     PROTOCOL: 'https://',
-    HOST: 'https://' + process.env.HOST,
-
-    SSL_KEY: process.env.SSL_KEY,
-    SSL_CERT: process.env.SSL_CERT,
-    SSL_CA: process.env.SSL_CA,
-    SSL_PASSPHRASE: process.env.SSL_PASSPHRASE,
-  }
+    HOST: 'https://' + env.HOST,
+    SSL_KEY: env.SSL_KEY,
+    SSL_CERT: env.SSL_CERT,
+    SSL_CA: env.SSL_CA,
+    SSL_PASSPHRASE: env.SSL_PASSPHRASE,
+  })
 }
 
 // WARNING!!!
@@ -67,6 +86,8 @@ process.env['configClient'] = JSON.stringify({
   APP_NAME_FRIENDLY: config.APP_NAME_FRIENDLY,
   SERVER_ROOT: config.SERVER_ROOT,
   API_ROOT: config.API_ROOT,
+  WEBSOCKET_URL: config.WEBSOCKET_URL,
+  WEBSOCKET_PROTOCOL: config.WEBSOCKET_PROTOCOL,
 })
 
 export default config

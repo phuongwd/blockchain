@@ -26,17 +26,6 @@ const Layout = ({ children }) => {
       {/*<footer>*/}
       {/*<Footer/>*/}
       {/*</footer>*/}
-
-      {/*language=SCSS*/}
-      <style jsx> {`
-        //.container-nav {
-        //  z-index: 10;
-        //}
-        //
-        //.container-content {
-        //  z-index: 100;
-        //}
-      `}</style>
     </>
   )
 }
