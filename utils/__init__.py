@@ -6,6 +6,7 @@ __all__ = [
     "bytes_to_int",
     "create_target",
     "console",
+    "dict_to_namedtuple",
     "int_to_bytes",
     "MockConvertibleToBytes",
     "PriorityQueue",
@@ -16,6 +17,7 @@ __all__ = [
 
 from .bin_str import bin_str
 from .create_target import create_target
+from .dict_to_namedtuple import dict_to_namedtuple
 from .bytes_to_int import bytes_to_int
 from .int_to_bytes import int_to_bytes
 from .mock_convertible_to_bytes import MockConvertibleToBytes

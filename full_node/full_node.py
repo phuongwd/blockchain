@@ -13,7 +13,7 @@ from utils import PriorityQueue
 
 
 class FullNode(BlockchainNode):
-    def __init__(self, host, port, known_peers, max_workers=5):
+    def __init__(self, config):
         """
         Implements DNS-seed server, which is a node that provides only two-way
         peer discovery service for other nodes. This node does not participate
@@ -23,11 +23,10 @@ class FullNode(BlockchainNode):
         :param port: Port on which a server will be listening
         :param max_workers: Maximium number of worker processess to spawn
         """
-        super(FullNode, self).__init__(host, port, known_peers, max_workers)
+        super(FullNode, self).__init__(config)
 
         self._transactions = PriorityQueue(f_priority=favor_higher_fees)
         self._blocks = list()
-
 
     def get_transactions(self, _, __):
         for transaction in self._transactions:

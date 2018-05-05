@@ -19,7 +19,7 @@ service = Service()
 
 
 class BlockchainNode(service.Servicer):
-    def __init__(self, host, port, known_peers, max_workers=5):
+    def __init__(self, config):
         """
         Base class for servers that implement blockchain service
 
@@ -28,20 +28,22 @@ class BlockchainNode(service.Servicer):
         :param max_workers: Maximium number of worker processess to spawn
         """
         super(BlockchainNode, self).__init__()
-        self._host = host
-        self._port = int(port)
-        self._server = grpc.server(futures.ThreadPoolExecutor(max_workers))
+        self._host = config.host
+        self._port = int(config.port)
+        self._server = grpc.server(
+            futures.ThreadPoolExecutor(config.max_workers))
         service.add_service(self, self._server)
-        self._server.add_insecure_port("{:}:{:}".format(host, port))
+        self._server.add_insecure_port(
+            "{:}:{:}".format(config.host, config.port))
 
         self._address = 0
-        self._this_node = Peer(host=host, port=port)
+        self._this_node = Peer(host=config.host, port=config.port)
 
-        self._known_peers = set(known_peers)
+        self._known_peers = set(config.known_peers)
         self._lock = Lock()
 
-        self.discover_peers()
-        self.share_peers()
+        self.discover_peers(config)
+        self.share_peers(config)
 
     def _log(self, *args):
         console.log("{:}:{:5d} | ".format(self._host, self._port), *args)
@@ -81,7 +83,7 @@ class BlockchainNode(service.Servicer):
             yield peer
 
     def send_peers_to(self, peer: Peer, include_self: bool = True):
-        self._log("> send_peers")
+        self._log("> send_peers to {:}".format(peer))
         peer.stub.send_peers(self.peer_iterator(include_self))
 
     def recv_peers_from(self, peer: Peer):
@@ -119,39 +121,51 @@ class BlockchainNode(service.Servicer):
 
         return True
 
-    def discover_peers(self):
-        self._log("> discovering peers")
+    def discover_peers(self, config):
+        if config.peer_discovery_interval >= 0:
+            self._log("> discovering peers")
 
-        self._lock.acquire()
-        known_peers = set(self._known_peers)
-        self._lock.release()
+            self._lock.acquire()
+            known_peers = set(self._known_peers)
+            self._lock.release()
 
-        for peer in known_peers:
-            is_connected = peer.connect()
+            for peer in known_peers:
+                is_connected = peer.connect()
 
-            if not is_connected:
-                continue
+                if not is_connected:
+                    continue
 
-            self.recv_peers_from(peer)
+                self.recv_peers_from(peer)
 
-        threading.Timer(3, self.discover_peers).start()
+            if config.peer_discovery_interval > 0:
+                threading.Timer(
+                    config.peer_discovery_interval,
+                    function=self.discover_peers,
+                    args=[config]
+                ).start()
 
-    def share_peers(self):
-        self._log("> sharing peers")
+    def share_peers(self, config):
+        if config.peer_sharing_interval >= 0:
+            self._log("> sharing peers")
 
-        self._lock.acquire()
-        known_peers = set(self._known_peers)
-        self._lock.release()
+            self._lock.acquire()
+            known_peers = set(self._known_peers)
+            self._lock.release()
 
-        for peer in known_peers:
-            is_connected = peer.connect()
+            for peer in known_peers:
+                is_connected = peer.connect()
 
-            if not is_connected:
-                continue
+                if not is_connected:
+                    continue
 
-            self.send_peers_to(peer)
+                self.send_peers_to(peer)
 
-        threading.Timer(3, self.share_peers).start()
+            if config.peer_sharing_interval > 0:
+                threading.Timer(
+                    config.peer_sharing_interval,
+                    function=self.share_peers,
+                    args=[config]
+                ).start()
 
     def is_known_peer(self, peer: Peer) -> bool:
         return (peer == self._this_node) or (peer in self._known_peers)

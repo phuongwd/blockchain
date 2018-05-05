@@ -9,7 +9,7 @@ from rpc import BlockchainNode
 
 
 class DNSSeeder(BlockchainNode):
-    def __init__(self, host, port, known_peers, max_workers=5):
+    def __init__(self, config):
         """
         Implements DNS-seed server, which is a node that provides only two-way
         peer discovery service for other nodes. This node does not participate
@@ -19,4 +19,4 @@ class DNSSeeder(BlockchainNode):
         :param port: Port on which a server will be listening
         :param max_workers: Maximium number of worker processess to spawn
         """
-        super(DNSSeeder, self).__init__(host, port, known_peers, max_workers)
+        super(DNSSeeder, self).__init__(config)
