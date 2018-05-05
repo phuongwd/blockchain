@@ -9,6 +9,7 @@ import os
 import sys
 
 from full_node import FullNode
+from rpc import Peer
 
 HOST = "localhost"
 
@@ -26,12 +27,14 @@ def main():
     node = FullNode(
         host=host or "localhost",
         port=int(port),
-        seeders=[(DNS_SEED_HOST, DNS_SEED_PORT), (VIEWER_HOST, VIEWER_PORT)],
+        known_peers=[
+            Peer(host=DNS_SEED_HOST, port=DNS_SEED_PORT),
+            Peer(host=VIEWER_HOST, port=VIEWER_PORT),
+        ],
         max_workers=3
     )
 
     node.listen()
-
 
 if __name__ == "__main__":
     main()

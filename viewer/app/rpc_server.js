@@ -11,12 +11,14 @@ class BlockchainRpcServer {
     this._server = new grpc.Server()
 
     this._server.addService(proto.service, {
+      ping: this.ping,
       getPeers: _.noop,
       getTransactions: _.noop,
       getBlocks: _.noop,
       // getPeers: this._getHandlerWrapper(this._controller.peers),
-      // getTransactions: this._getHandlerWrapper(this._controller.transactions),
-      // getBlocks: this._getHandlerWrapper(this._controller.blocks),
+      // getTransactions:
+      // this._getHandlerWrapper(this._controller.transactions), getBlocks:
+      // this._getHandlerWrapper(this._controller.blocks),
       sendPeers: this._sendHandlerWrapper(this._controller.addPeers),
       sendTransactions: this._sendHandlerWrapper(this._controller.addTransactions),
       sendBlocks: this._sendHandlerWrapper(this._controller.addBlocks),
@@ -26,6 +28,11 @@ class BlockchainRpcServer {
     console.info(`Listening on port: ${port}`)
     this._server.start()
 
+  }
+
+  ping = (call, callback) => {
+    const message = _.get(call, 'request.message')
+    callback(null, { message })
   }
 
   _getHandlerWrapper = (handler) => (

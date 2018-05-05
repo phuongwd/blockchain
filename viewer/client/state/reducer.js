@@ -20,13 +20,26 @@ const reducer = (state = stateDefault, action) => {
     }
   }
 
+  case Actions.NODES_SENT:
+  case Actions.TRANSACTIONS_SENT:
+  case Actions.BLOCKS_SENT:
   case Actions.REFRESH_SUCCEEDED: {
+    let nodes = _.get(action, 'payload.data.nodes', state.nodes)
+    let blocks = _.get(action, 'payload.data.blocks', state.blocks)
+    let transactions = _.get(action, 'payload.data.transactions', state.transactions)
+
+    nodes = _.merge([], nodes, state.nodes)
+    nodes = _.sortBy(nodes, ['host', 'port', 'address', 'type'])
+
+    blocks = _.merge([], blocks, state.blocks)
+    transactions = _.merge([], transactions, state.transactions)
+
     return {
       ...state,
       updated: true,
-      nodes: _.get(action, 'payload.data.nodes', state.nodes),
-      blocks: _.get(action, 'payload.data.blocks', state.blocks),
-      transactions: _.get(action, 'payload.data.transactions', state.transactions),
+      nodes,
+      blocks,
+      transactions,
     }
   }
 
@@ -36,30 +49,6 @@ const reducer = (state = stateDefault, action) => {
       updated: true,
       err: _.get(action, 'payload.status', {}),
       user: null,
-    }
-  }
-
-  case Actions.NODES_SENT: {
-    return {
-      ...state,
-      updated: true,
-      nodes: _.get(action, 'payload.data.nodes', state.nodes),
-    }
-  }
-
-  case Actions.TRANSACTIONS_SENT: {
-    return {
-      ...state,
-      updated: true,
-      blocks: _.get(action, 'payload.data.blocks', state.blocks),
-    }
-  }
-
-  case Actions.BLOCKS_SENT: {
-    return {
-      ...state,
-      updated: true,
-      transactions: _.get(action, 'payload.data.transactions', state.transactions),
     }
   }
 

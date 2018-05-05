@@ -9,6 +9,7 @@ __all__ = [
     "int_to_bytes",
     "MockConvertibleToBytes",
     "PriorityQueue",
+    "random_string",
     "resolve_parent_path",
     "wait_forever"
 ]
@@ -19,5 +20,6 @@ from .bytes_to_int import bytes_to_int
 from .int_to_bytes import int_to_bytes
 from .mock_convertible_to_bytes import MockConvertibleToBytes
 from .priority_queue import PriorityQueue
+from .random_string import random_string
 from .resolve_parent_path import resolve_parent_path
 from .wait_forever import wait_forever

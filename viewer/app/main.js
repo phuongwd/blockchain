@@ -67,7 +67,7 @@ nextjs_app.prepare()
     http.listen(config.HTTP_PORT, (err) => {
       if(err) throw err
       console.info(
-        `Listening on ${config.PROTOCOL}://${config.HTTP_HOST}:${config.HTTP_PORT}`,
+        `Listening on ${config.PROTOCOL}${config.HTTP_HOST}:${config.HTTP_PORT}`,
       )
     })
   })

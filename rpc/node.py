@@ -5,54 +5,21 @@ from __future__ import (
     absolute_import, division, print_function, unicode_literals
 )
 
-import os
-from concurrent import futures
+import threading
 from threading import Lock
-from typing import Iterable
+from concurrent import futures
+from queue import Queue
 
 import grpc
-import protol
-import dotenv
 
-from rpc import Peer, Seeder, format_peer
+from rpc import Peer, Service
 from utils import wait_forever, console
 
-CURRENT_PATH = os.path.abspath(os.path.dirname(__file__))
-
-ENV_PATH = os.path.join(CURRENT_PATH, "..", ".env")
-dotenv.load_dotenv(dotenv_path=ENV_PATH)
-
-PROTO_PATH = os.path.join(CURRENT_PATH, "..", "protos", "blockchain.proto")
-SERVICE_NAME = os.getenv("SERVICE_NAME") or "Blockchain"
+service = Service()
 
 
-def load_service(proto_path, service_name):
-    """
-    Loads service definition from protobuf file and performs gRPC service
-    initialization.
-
-    :param proto_path: Path to protobuf file with service definition
-    :param service_name: Service name. Should match name of `service` in proto
-
-    :return: Returns tuple (messages, Servicer, add_service, Stub), where:
-        `messages` is an object that contains message definitions
-        `Servicer` is a class type to be used as a base class for servers
-        `add_service` is a function that adds server implementations to
-    the service
-        `Stub` is a class type to be used by clients
-    """
-    messages, service = protol.load(proto_path)
-    Servicer = getattr(service, service_name + "Servicer")
-    add_service = getattr(service, "add_" + service_name + "Servicer_to_server")
-    Stub = getattr(service, service_name + "Stub")
-    return messages, Servicer, add_service, Stub
-
-
-messages, Servicer, add_service, Stub = load_service(PROTO_PATH, SERVICE_NAME)
-
-
-class BlockchainNode(Servicer):
-    def __init__(self, host, port, max_workers=5):
+class BlockchainNode(service.Servicer):
+    def __init__(self, host, port, known_peers, max_workers=5):
         """
         Base class for servers that implement blockchain service
 
@@ -60,27 +27,24 @@ class BlockchainNode(Servicer):
         :param port: Port on which a server will be listening
         :param max_workers: Maximium number of worker processess to spawn
         """
-        super(Servicer, self).__init__()
+        super(BlockchainNode, self).__init__()
         self._host = host
-        self._port = port
-        self._messages = messages
+        self._port = int(port)
         self._server = grpc.server(futures.ThreadPoolExecutor(max_workers))
-        add_service(self, self._server)
+        service.add_service(self, self._server)
         self._server.add_insecure_port("{:}:{:}".format(host, port))
-        self._print_lock = Lock()
 
         self._address = 0
-        self._this_node = self._messages.Node(
-            host=host, port=port, address=self._address
-        )
+        self._this_node = Peer(host=host, port=port)
 
-        self._known_seeders = []
-        self._known_peers = []
+        self._known_peers = set(known_peers)
+        self._lock = Lock()
+
+        self.discover_peers()
+        self.share_peers()
 
     def _log(self, *args):
-        self._print_lock.acquire()
         console.log("{:}:{:5d} | ".format(self._host, self._port), *args)
-        self._print_lock.release()
 
     def start(self):
         """
@@ -107,93 +71,116 @@ class BlockchainNode(Servicer):
         except KeyboardInterrupt:
             self.stop()
 
-    def peer_iterator(self, peers: Iterable[Peer]):
+    def peer_iterator(self, include_self: bool = True):
+        peers = [p.to_proto() for p in self._known_peers]
+
+        if include_self:
+            peers.append(self._this_node.to_proto())
+
         for peer in peers:
             yield peer
 
-    def send_known_peers_to(self, peer: Peer, include_self: bool):
-        known_peers = [
-            self._messages.Node(
-                host=p.host,
-                port=p.port,
-                address=p.address
-            )
+    def send_peers_to(self, peer: Peer, include_self: bool = True):
+        self._log("> send_peers")
+        peer.stub.send_peers(self.peer_iterator(include_self))
 
-            for p in self._known_peers
-        ]
+    def recv_peers_from(self, peer: Peer):
+        self._log("> get_peers from {:}".format(peer))
 
-        if include_self:
-            known_peers += [self._this_node]
+        if not peer.is_connected:
+            return False
 
-        if len(known_peers) > 0:
-            peer.stub.send_peers(
-                self.peer_iterator(known_peers)
-            )
+        rcvd_peers = peer.stub.get_peers(service.messages.Empty())
+        peer_q = Queue()
 
-    def connect_to(self, host: str, port: int):
-        """
-        Connects as a gRPC client to a given gRPC server
+        for rcvd_peer in rcvd_peers:
+            peer = Peer.from_proto(rcvd_peer)
+            if not self.is_known_peer(peer):
+                peer_q.put(peer)
 
-        :param host: Server host
-        :param port: Server port
+        while not peer_q.empty():
+            rcvd_peer = peer_q.get()
 
-        :return: Stub of the service connected to the specified server
-        """
-        self._log("Connecting to: {:}:{:}".format(host, port))
-        return Stub(grpc.insecure_channel("{:}:{:}".format(host, port)))
+            if self.is_known_peer(peer):
+                continue
 
-    def add_peer(self, host, port, address):
-        stub = self.connect_to(host, port)
-        peer = Peer(host, port, address, stub)
-        self._log("Adding peer: {:}".format(peer))
-        self._known_peers.append(peer)
-        return peer
+            is_connected = rcvd_peer.connect()
+            if not is_connected:
+                continue
 
-    def add_seeder(self, host, port):
-        stub = self.connect_to(host, port)
-        seeder = Seeder(host, port, stub)
-        self._log("Adding seeder: {:}".format(seeder))
-        self._known_seeders.append(seeder)
-        return seeder
+            self._log("> add  peer:  {:}".format(peer))
+            self._known_peers.add(rcvd_peer)
 
-    def is_known_peer(self, peer):
-        # self._log("is_known_peer _this_node: {:}:{:}/{:}".format(
-        #     self._this_node.host, self._this_node.port, self._this_node.address
-        # ))
-        #
-        # self._log("is_known_peer peer: {:}:{:}/{:}".format(
-        #     peer.host, peer.port, peer.address
-        # ))
-        #
-        # self._log("is_known_peer equal: {:}:{:}/{:}".format(
-        #     peer.host == self._this_node.host,
-        #     peer.port == self._this_node.port,
-        #     peer.address == self._this_node.address
-        # ))
+            rcvd_peers = rcvd_peer.stub.get_peers(service.messages.Empty())
+            for rcvd_peer in rcvd_peers:
+                peer = Peer.from_proto(rcvd_peer)
+                if not self.is_known_peer(peer):
+                    peer_q.put(peer)
 
+        return True
+
+    def discover_peers(self):
+        self._log("> discovering peers")
+
+        self._lock.acquire()
+        known_peers = set(self._known_peers)
+        self._lock.release()
+
+        for peer in known_peers:
+            is_connected = peer.connect()
+
+            if not is_connected:
+                continue
+
+            self.recv_peers_from(peer)
+
+        threading.Timer(3, self.discover_peers).start()
+
+    def share_peers(self):
+        self._log("> sharing peers")
+
+        self._lock.acquire()
+        known_peers = set(self._known_peers)
+        self._lock.release()
+
+        for peer in known_peers:
+            is_connected = peer.connect()
+
+            if not is_connected:
+                continue
+
+            self.send_peers_to(peer)
+
+        threading.Timer(3, self.share_peers).start()
+
+    def is_known_peer(self, peer: Peer) -> bool:
         return (peer == self._this_node) or (peer in self._known_peers)
 
-    def get_peers(self, request, context):
+    def ping(self, ping, context):
+        return service.messages.Pong(message=ping.message)
+
+    def get_peers(self, _, __):
         """
         Server handler that sends known peers in respond to `get_peers` request
         """
-        self._log("Received  get_peers request")
-        for peer in self._known_peers:
-            yield self._messages.Node(
-                host=peer.host,
-                port=peer.port,
-                address=peer.address
-            )
+        self._log("< req: get_peers")
+        for peer in self.peer_iterator(include_self=False):
+            self._log("> sent peer: {:}".format(Peer.from_proto(peer)))
+            yield peer
 
-    def send_peers(self, peers, context):
+    def send_peers(self, peers, __):
         """
         Server handler that accepts peers on `send_peers` request
         """
-        self._log("Received send_peers request")
+        self._log("< req: send_peers")
         for peer in peers:
-            self._log("Received peer: {:}".format(format_peer(peer)))
+            peer = Peer.from_proto(peer)
+            self._log("> rcvd peer:  {:}".format(peer))
 
-            if not self.is_known_peer(peer):
-                peer = self.add_peer(peer.host, peer.port, peer.address)
+            if self.is_known_peer(peer):
+                continue
 
-        return self._messages.Empty()
+            self._log("> add  peer:  {:}".format(peer))
+            self._known_peers.add(peer)
+
+        return service.messages.Empty()

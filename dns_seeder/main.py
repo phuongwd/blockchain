@@ -17,6 +17,7 @@ def main():
     dns_seeder = DNSSeeder(
         host=DNS_SEED_HOST,
         port=DNS_SEED_PORT,
+        known_peers=[],
         max_workers=3
     )
 

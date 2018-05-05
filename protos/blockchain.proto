@@ -11,13 +11,20 @@ message Empty {
 }
 
 
+message Ping {
+    string message = 1;
+}
+
+message Pong {
+    string message = 1;
+}
+
 // Holds network information about a single node (peer) in the network.
 message Node {
     string host = 1; // IP address of the node
     int32 port = 2; // Port on which the node is listening
     int32 address = 3; // Coin address of the node
 }
-
 
 // Represents an input of a transaction.
 // An input of a valid transaction must refer to a specific unspent output
@@ -30,13 +37,11 @@ message TransactionInput {
     bytes signature = 3; // crypto-signature of the owner
 }
 
-
 // Represents an output of a transaction.
 message TransactionOutput {
     int32 amount = 1; // amount of coins to transfer
     bytes key = 2; // public key which confirms the ownership
 }
-
 
 // Represents a transaction.
 // Transaction is a way to transfer coins between owners.
@@ -62,25 +67,33 @@ message Block {
     repeated Transaction transactions = 7; // array of transactions
 }
 
-
 // Describes methods of the blockchain service
 service Blockchain {
+    rpc ping (Ping) returns (Pong) {
+    }
+
     // A node advertises to its peer nodes one or more of the new transactions
     // or transactions it has heard about previously.
-    rpc send_transactions (stream Transaction) returns (Empty) {}
+    rpc send_transactions (stream Transaction) returns (Empty) {
+    }
 
     // A node requests another node to send known transactions.
-    rpc get_transactions (Empty) returns (stream Transaction) {}
+    rpc get_transactions (Empty) returns (stream Transaction) {
+    }
 
     // A node proposes one or more blocks to its peer nodes
-    rpc send_blocks (stream Block) returns (Empty) {}
+    rpc send_blocks (stream Block) returns (Empty) {
+    }
 
     // A node requests another node to send known blocks.
-    rpc get_blocks (Empty) returns(stream Block) {}
+    rpc get_blocks (Empty) returns (stream Block) {
+    }
 
     // A node requests information about peer nodes from another peer
-    rpc get_peers (Empty) returns (stream Node) {}
+    rpc get_peers (Empty) returns (stream Node) {
+    }
 
     // A node sends information about peer nodes from another peer
-    rpc send_peers (stream Node) returns (Empty) {}
+    rpc send_peers (stream Node) returns (Empty) {
+    }
 }
