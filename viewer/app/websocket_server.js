@@ -6,11 +6,9 @@ const createWebsocketsServer = (server, config) => {
   const wss = new WebSocket.Server({ server })
 
   wss.broadcast = (action) => {
-    console.log(wss.clients.size)
     if(!action) {
       return
     }
-
 
     wss.clients.forEach(function each(client) {
       if(client.readyState === WebSocket.OPEN) {

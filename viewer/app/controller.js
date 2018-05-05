@@ -4,25 +4,27 @@ import Actions from '../client/state/actions'
 
 class BlockchainController {
   constructor() {
-    this.wss = null
-    this.rpcClient = null
+    this._wss = null
+    this._rpcClient = null
+    this._peers = []
+    this._transactions = []
+    this._blocks = []
   }
 
-  setRpcClient = (rpcClient) => { this.rpcClient = rpcClient }
+  setRpcClient = (rpcClient) => { this._rpcClient = rpcClient }
 
-  setWebsocketServer = (wss) => { this.wss = wss }
+  setWebsocketServer = (wss) => { this._wss = wss }
 
   peers = () => {
-    return this._model.peers()
+    return this._peers
   }
 
   addPeers = (peers) => {
-    console.log(peers)
-    this.wss.broadcast(Actions.nodes(peers))
+    this._wss.broadcast(Actions.nodes(peers))
   }
 
   blocks = () => {
-    return this._model.blocks()
+    return this._blocks
   }
 
   addBlocks = (blocks) => {
@@ -30,7 +32,7 @@ class BlockchainController {
   }
 
   transactions = () => {
-    return this._model.transactions()
+    return this._transactions
   }
 
   addTransactions = (transactions) => {

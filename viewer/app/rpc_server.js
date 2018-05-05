@@ -12,13 +12,9 @@ class BlockchainRpcServer {
 
     this._server.addService(proto.service, {
       ping: this.ping,
-      getPeers: _.noop,
-      getTransactions: _.noop,
-      getBlocks: _.noop,
-      // getPeers: this._getHandlerWrapper(this._controller.peers),
-      // getTransactions:
-      // this._getHandlerWrapper(this._controller.transactions), getBlocks:
-      // this._getHandlerWrapper(this._controller.blocks),
+      getPeers: this._getHandlerWrapper(this._controller.peers),
+      getTransactions: this._getHandlerWrapper(this._controller.transactions),
+      getBlocks: this._getHandlerWrapper(this._controller.blocks),
       sendPeers: this._sendHandlerWrapper(this._controller.addPeers),
       sendTransactions: this._sendHandlerWrapper(this._controller.addTransactions),
       sendBlocks: this._sendHandlerWrapper(this._controller.addBlocks),
