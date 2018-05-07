@@ -12,12 +12,12 @@ from typing import List
 import protol
 
 from blockchain import (
-    Transaction, TransactionOutput, md5, MerkleTree
+    Transaction, TransactionOutput, md5, MerkleTree, constants
 )
-from utils import bin_str, bytes_to_int, create_target, bin_to_hex
-from utils.int_to_bytes import int_to_bytes
 
-COINBASE_AMOUNT = 25
+from utils import (
+    bin_str, bytes_to_int, create_target, bin_to_hex, int_to_bytes
+)
 
 
 class Block:
@@ -35,7 +35,8 @@ class Block:
         self._hash_f = hash_f
 
         # Prepend conbase transaction
-        coinbase_output = TransactionOutput(amount=COINBASE_AMOUNT, key=key)
+        coinbase_output = TransactionOutput(
+            amount=constants.BLOCK_COINBASE_AMOUNT, key=key)
 
         coinbase_tx = Transaction(
             inputs=[],
@@ -76,8 +77,12 @@ class Block:
         return self._nonce
 
     @property
+    def coinbase_transaction(self):
+        return self._transactions[0]
+
+    @property
     def extra_nonce(self) -> int:
-        return self._transactions[0].extra_nonce
+        return self.coinbase_transaction.extra_nonce
 
     @extra_nonce.setter
     def extra_nonce(self, extra_nonce: int) -> None:

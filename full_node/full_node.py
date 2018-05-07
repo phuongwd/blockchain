@@ -10,12 +10,13 @@ import sys
 import time
 from queue import Queue
 from threading import Thread
-from typing import Iterable
+from typing import Iterable, List
 
 import blockchain
 from blockchain import Transaction, favor_higher_fees, Block, sha256
+from blockchain.fake_transaction_generator import FakeTransactionGenerator
 from rpc import BlockchainNode
-from utils import PriorityQueue, int_to_bytes, bin_str, bytes_to_int, bin_to_hex
+from utils import PriorityQueue, int_to_bytes, bin_str, bytes_to_int
 
 
 class FullNode(BlockchainNode):
@@ -31,9 +32,8 @@ class FullNode(BlockchainNode):
         """
         super(FullNode, self).__init__(config)
 
-        self._transaction_queue = PriorityQueue(f_priority=favor_higher_fees)
-        self._block_queue = Queue()
-        self._blocks = list()
+        self._blockchain = list()
+        self._transactions = list()
 
         self._public_key = int_to_bytes(random.randint(0, sys.maxsize))
         self._hash_f = getattr(blockchain, config.hash_f)
@@ -41,6 +41,14 @@ class FullNode(BlockchainNode):
         self._difficulty = config.difficulty
         self._mining_throttle_ms = config.mining_throttle_ms
 
+        # Producer-consumer queues for exchanging data with the mining thread
+        self._transaction_queue = PriorityQueue(f_priority=favor_higher_fees)
+        self._block_queue = Queue()
+
+        # FIXME: fake transaction source
+        self._transaction_generator = FakeTransactionGenerator(self._hash_f)
+
+        # Launch mining thread (consumes transactions, produces blocks)
         Thread(target=self.mine).start()
 
     def mine(self):
@@ -48,9 +56,10 @@ class FullNode(BlockchainNode):
 
         while True:
             transactions = []
-            # for _ in range(5):
-            #     transaction = self._transaction_queue.get()
-            #     transactions.append(transaction)
+            for _ in range(5):
+                transaction = self._transaction_generator.generate()
+                # transaction = self._transaction_queue.get()
+                transactions.append(transaction)
 
             block = Block(
                 hash_prev=self._hash_prev,
@@ -97,7 +106,7 @@ class FullNode(BlockchainNode):
         return self._messages.Empty()
 
     def get_blocks(self, _, __):
-        for block in self._blocks:
+        for block in self._blockchain:
             yield block.to_proto()
 
     def send_blocks(self, blocks: Iterable[Block], _):

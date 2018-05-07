@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from .constants import constants
 from .hash_functions import md5, sha256, scrypt
 from .transaction_input import TransactionInput
 from .transaction_output import TransactionOutput

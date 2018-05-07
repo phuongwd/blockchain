@@ -5,6 +5,8 @@ from __future__ import (
     absolute_import, division, print_function, unicode_literals
 )
 
+from utils import int_to_bytes
+
 
 class TransactionOutput:
     def __init__(self, amount: int, key: bytes):
@@ -13,4 +15,4 @@ class TransactionOutput:
 
     @property
     def bytes(self):
-        return bytes([self._amount]) + self._key
+        return int_to_bytes(self._amount) + self._key
