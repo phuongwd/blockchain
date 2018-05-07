@@ -9,6 +9,26 @@ $font-family-default: $font-family-sans-serif;
 
 $font-family-base: $font-family-default;
 
-$font-color-default: #343342;
+//$font-color-default: #343342;
 
 @import "./resets.scss";
+
+.fill {
+  position: absolute;
+  background-color: white;
+  left: 0;
+  right: 0;
+  top: 75px;
+  bottom: 0;
+}
+
+.fade-enter {
+  opacity: 0;
+  z-index: 2;
+}
+
+.fade-enter-active {
+  opacity: 1;
+  z-index: 1;
+  transition: opacity 250ms ease-in;
+}

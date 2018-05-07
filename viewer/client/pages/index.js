@@ -1,35 +1,24 @@
 import React from 'react'
-
-import Layout from '../components/Layout'
+import { Button } from 'material-ui'
 
 import pageMiddleware from '../lib/page_middleware'
 import Actions from '../state/actions'
 
-const Index = ({ refresh, nodes, transactions, blocks }) => {
-  const onclick = () => {
-    refresh()
-  }
+import TableOfNodes from '../components/TableOfNodes'
 
+
+const Index = ({ refresh, nodes, transactions, blocks }) => {
   return (
     <>
-      <Layout>
-        <h1>
-          Hello, Blockchain!
-        </h1>
+      <h1>
+        Hello, Blockchain!
+      </h1>
 
-        <p>
-          Bitcoins and stuff...
-        </p>
+      <TableOfNodes nodes={nodes}/>
 
-        <p>
-          { JSON.stringify(nodes) }
-        </p>
-
-        <button onClick={onclick}>
-          Send message!
-        </button>
-
-      </Layout>
+      <Button variant={'raised'} color={'secondary'} onClick={refresh}>
+        Update
+      </Button>
     </>
   )
 }

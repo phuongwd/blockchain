@@ -1,6 +1,7 @@
 import React from 'react'
 
 import Link from 'next/link'
+import { AppBar, Toolbar, Button, Typography, Tabs, Tab } from 'material-ui'
 
 
 class Navigation extends React.Component {
@@ -11,9 +12,26 @@ class Navigation extends React.Component {
 
   render() {
     return (
-      <div>
+      <>
+        <AppBar position='static'>
+          <Toolbar>
+            <Link href={'/'}>
+              <Typography variant="title" color="inherit">
+                Blockchain
+              </Typography>
+            </Link>
 
-      </div>
+            <Tabs>
+              <Link href={'/'}>
+                <Tab label="Home"/>
+              </Link>
+              <Link href={'/about'}>
+                <Tab label="About"/>
+              </Link>
+            </Tabs>
+          </Toolbar>
+        </AppBar>
+      </>
     )
   }
 }

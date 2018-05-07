@@ -1,10 +1,26 @@
 import React from 'react'
 
 import Document, { Head, Main, NextScript } from 'next/document'
+import { CssBaseline, MuiThemeProvider } from 'material-ui'
+import { createMuiTheme } from 'material-ui/styles'
+import purple from 'material-ui/colors/purple'
+import green from 'material-ui/colors/green'
+
 import htmlescape from 'htmlescape'
 
 const configClient = JSON.parse(process.env['configClient'])
 
+
+
+const theme = createMuiTheme({
+  palette: {
+    primary: purple,
+    secondary: green,
+  },
+  status: {
+    danger: 'orange',
+  },
+})
 
 class MyDocument extends Document {
   constructor(props, context) {
@@ -42,7 +58,12 @@ class MyDocument extends Document {
               __html: '__configClient__ = ' + htmlescape(configClient),
             }}
           />
-          <Main/>
+
+          <CssBaseline/>
+
+          <MuiThemeProvider theme={theme}>
+            <Main/>
+          </MuiThemeProvider>
           <NextScript/>
         </body>
       </html>

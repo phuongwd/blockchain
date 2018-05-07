@@ -8,8 +8,18 @@ const stateDefault = {
   transactions: [],
 }
 
+const mergeNewData = (state, action, fieldName, orderBy) => {
+  const oldData = _.get(state, fieldName, [])
+  const newData = _.get(action, 'payload.data.nodes', [])
+
+  let mergedData = [...oldData, ...newData]
+  mergedData = _.orderBy(mergedData, orderBy)
+  mergedData = _.uniqWith(mergedData, _.isEqual)
+  return mergedData
+}
+
 const reducer = (state = stateDefault, action) => {
-  console.log(action)
+  // console.log(action)
 
   switch(action.type) {
 
@@ -24,15 +34,9 @@ const reducer = (state = stateDefault, action) => {
   case Actions.TRANSACTIONS_SENT:
   case Actions.BLOCKS_SENT:
   case Actions.REFRESH_SUCCEEDED: {
-    let nodes = _.get(action, 'payload.data.nodes', state.nodes)
-    let blocks = _.get(action, 'payload.data.blocks', state.blocks)
-    let transactions = _.get(action, 'payload.data.transactions', state.transactions)
-
-    nodes = _.merge([], nodes, state.nodes)
-    nodes = _.sortBy(nodes, ['host', 'port', 'address', 'type'])
-
-    blocks = _.merge([], blocks, state.blocks)
-    transactions = _.merge([], transactions, state.transactions)
+    const nodes = mergeNewData(state, action, 'nodes', ['host', 'port', 'address', 'type'])
+    const blocks = mergeNewData(state, action, 'blocks', [])
+    const transactions = mergeNewData(state, action, 'transactions', [])
 
     return {
       ...state,
