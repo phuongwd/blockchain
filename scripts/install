@@ -24,7 +24,9 @@ if [ ! -d "${CONDA_DIR}" ]; then
   bash "${TMP_DIR}/${INSTALLER_FILENAME}" -b -p ${CONDA_DIR}
 fi
 
-virtualenv --python="${CONDA_DIR}/bin/python3" "${VIRTUALENV_DIR}"
+${CONDA_DIR}/bin/python3 -m pip install --upgrade pip virtualenv wheel
+
+${CONDA_DIR}/bin/python3 -m virtualenv --python="${CONDA_DIR}/bin/python3" "${VIRTUALENV_DIR}"
 source "${VIRTUALENV_DIR}/bin/activate"
-python -m pip install --upgrade pip
-python -m pip install --upgrade -r requirements.txt
+
+${CONDA_DIR}/bin/python3 -m pip install --upgrade -r requirements.txt

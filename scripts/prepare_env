@@ -5,9 +5,10 @@ set -e
 
 export CURR_DIR=$(cd $(dirname "${BASH_SOURCE[0]}"); pwd)
 
-export PROJECT_ROOT="$(dirname ${CURR_DIR})"
-export TMP_DIR="${PROJECT_ROOT}/.tmp"
-export CONDA_DIR="${PROJECT_ROOT}/.conda"
+PROJECT_NAME=bc
+export PROJECT_ROOT=$(dirname ${CURR_DIR})
+export TMP_DIR=${PROJECT_ROOT}/.tmp
+export CONDA_DIR=${PROJECT_ROOT}/.conda
 export VIRTUALENV_DIR="${PROJECT_ROOT}/.${PROJECT_NAME}"
 
 # Activate virtual environment
@@ -15,5 +16,8 @@ if [ -f "${VIRTUALENV_DIR}/bin/activate" ]; then
     source "${VIRTUALENV_DIR}/bin/activate"
 fi
 
+# Add conda dir to PATH
+export PATH="${CONDA_DIR}/bin${PATH:+:$PATH}"
+
 # Add current dir to python module search path
-export PYTHONPATH=${CURR_DIR}/../${PYTHONPATH:+:PYTHONPATH}
+export PYTHONPATH="${PROJECT_ROOT}${PYTHONPATH:+:$PYTHONPATH}"
