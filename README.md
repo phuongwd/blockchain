@@ -12,7 +12,7 @@
 Activate virtual environment
 
 ```
-    source bc/bin/activate
+    source .bc/bin/activate
 ```
 
 ### Running unit tests

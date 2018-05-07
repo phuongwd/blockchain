@@ -164,4 +164,6 @@ typings/
 .next
 
 
-bc/
+.bc/
+.conda/
+.tmp/

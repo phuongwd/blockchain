@@ -1,15 +1,30 @@
 #!/usr/bin/env bash
 set -e
 
-# Creates a local python virtual environment and installs the dependencies
-# Required for the project.
+# Installs a fresh version of python via conda (miniconda, actually),
+# creates a local virtual environment and installs the dependencies
+# required for the project.
 
-# Assumes Python 3 interpreter and pip and virtualenv packages are installed
-# and are ready-availible.
+export CURR_DIR=$(cd $(dirname "${BASH_SOURCE[0]}"); pwd)
+source "${CURR_DIR}/prepare_env"
 
-PROJECT_NAME=bc
+INSTALLER_FILENAME="Miniconda3-latest-Linux-x86_64.sh"
+URL="https://repo.continuum.io/miniconda/${INSTALLER_FILENAME}"
 
-virtualenv --python=python3 ${PROJECT_NAME}
-source ${PROJECT_NAME}/bin/activate
+# If there is no Python directory
+if [ ! -d "${CONDA_DIR}" ]; then
+
+  # If there is no archive downloaded, download it
+  if [ ! -f "${TMP_DIR}/${INSTALLER_FILENAME}" ]; then
+      mkdir -p "${TMP_DIR}"
+      wget "${URL}" -O "${TMP_DIR}/${INSTALLER_FILENAME}"
+  fi
+
+  # Install Python
+  bash "${TMP_DIR}/${INSTALLER_FILENAME}" -b -p ${CONDA_DIR}
+fi
+
+virtualenv --python="${CONDA_DIR}/bin/python3" "${VIRTUALENV_DIR}"
+source "${VIRTUALENV_DIR}/bin/activate"
 python -m pip install --upgrade pip
 python -m pip install --upgrade -r requirements.txt
