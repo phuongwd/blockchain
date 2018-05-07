@@ -22,13 +22,8 @@ from utils import PriorityQueue, int_to_bytes, bin_str, bytes_to_int
 class FullNode(BlockchainNode):
     def __init__(self, config):
         """
-        Implements DNS-seed server, which is a node that provides only two-way
-        peer discovery service for other nodes. This node does not participate
-        in blockchain maintenance, serving clients or in mining.
-
-        :param host: Host on which a server will be listening
-        :param port: Port on which a server will be listening
-        :param max_workers: Maximium number of worker processess to spawn
+        Implements full node that not only tracks other nodes, but also
+        maintains full blockchain, accepts transactions and mines new blocks.
         """
         super(FullNode, self).__init__(config)
 
@@ -52,7 +47,9 @@ class FullNode(BlockchainNode):
         Thread(target=self.mine).start()
 
     def mine(self):
-        hash_f = sha256
+        """
+        Mines new blocks
+        """
 
         while True:
             transactions = []
@@ -69,35 +66,51 @@ class FullNode(BlockchainNode):
                 hash_f=self._hash_f
             )
 
-            self._log(
+            self.log_info(
                 "Mining a new block:" + " " * 32 +
                 "\n{:}\n".format(block.summary)
             )
 
             found = False
             while not found:
-                found, nonce, hash = block.mine_one()
+                found = self.mine_one_iteration(block)
 
-                sys.stdout.write("Nonce: {:010d} | Hash : {:}\r".format(
-                    nonce,
-                    bin_str(bytes_to_int(hash), pad=hash_f.bits)
-                ))
-
-                if found:
-                    self._log("Found a new block:" + " " * 32 +
-                              "\n{:}\n".format(block.details))
-                    self._block_queue.put(block)
-                    self._hash_prev = block.hash
-
-                # For the sake of demonstration we throttle mining
-                # to reduce CPU load
+                # Throttle mining to reduce CPU load (for the demo)
                 time.sleep(self._mining_throttle_ms / 1000)
 
+    def mine_one_iteration(self, block):
+        """
+        Perform one iteration of a block mining (increments nonce once)
+        """
+
+        found, nonce, curr_hash = block.mine_one()
+
+        sys.stdout.write("Nonce: {:010d} | Hash : {:}\r".format(
+            nonce,
+            bin_str(bytes_to_int(curr_hash), pad=self._hash_f.bits)
+        ))
+
+        if found:
+            self.log_info("Found a new block:" + " " * 32 +
+                          "\n{:}\n".format(block.details))
+            self._block_queue.put(block)
+            self._hash_prev = block.hash
+
+        return found
+
     def get_transactions(self, _, __):
+        """
+        RPC server handler triggered on get_transactions RPC call
+        """
+
         for transaction in self._transaction_queue:
             yield transaction.to_proto()
 
     def send_transactions(self, transactions: Iterable[Transaction], _):
+        """
+        RPC server handler triggered on send_transactions RPC call
+        """
+
         for transaction in transactions:
             transaction = Transaction.from_proto(transaction)
             if transaction is not None:
@@ -106,10 +119,16 @@ class FullNode(BlockchainNode):
         return self._messages.Empty()
 
     def get_blocks(self, _, __):
+        """
+        RPC server handler triggered on get_blocks RPC call
+        """
         for block in self._blockchain:
             yield block.to_proto()
 
     def send_blocks(self, blocks: Iterable[Block], _):
+        """
+        RPC server handler triggered on send_blocks RPC call
+        """
         for block in blocks:
             block = Block.from_proto(block)
             if block is not None:

@@ -6,8 +6,17 @@ from __future__ import (
 )
 
 import sys
+from enum import IntEnum
 
 from utils.datetime import datetime
+
+
+class Verbosity(IntEnum):
+    silent = 0
+    error = 1
+    warning = 2
+    info = 3
+    debug = 4
 
 
 def _console_write_with_datetime(*args, **kwargs):
