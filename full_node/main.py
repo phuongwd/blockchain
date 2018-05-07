@@ -34,7 +34,10 @@ def main():
         ],
         "peer_discovery_interval": 3,
         "peer_sharing_interval": 3,
-        "max_workers": 3
+        "max_workers": 3,
+        "hash_f": "sha256",
+        "difficulty": 9,
+        "mining_throttle_ms": 10
     })
 
     node = FullNode(config)

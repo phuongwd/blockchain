@@ -14,7 +14,7 @@ import protol
 from blockchain import (
     Transaction, TransactionOutput, md5, MerkleTree
 )
-from utils import bin_str, bytes_to_int, create_target
+from utils import bin_str, bytes_to_int, create_target, bin_to_hex
 from utils.int_to_bytes import int_to_bytes
 
 COINBASE_AMOUNT = 25
@@ -64,6 +64,18 @@ class Block:
         return self._target
 
     @property
+    def hash_prev(self):
+        return self._hash_prev
+
+    @property
+    def hash(self):
+        return self._hash
+
+    @property
+    def nonce(self):
+        return self._nonce
+
+    @property
     def extra_nonce(self) -> int:
         return self._transactions[0].extra_nonce
 
@@ -72,6 +84,10 @@ class Block:
         self._transactions[0].extra_nonce = extra_nonce
         self._nonce = 0
         self._update()
+
+    @property
+    def merkle_root(self):
+        return self._merkle_root
 
     def _update(self):
         # Recompute the tree of transactions
@@ -106,12 +122,46 @@ class Block:
         # TODO
         pass
 
+    @property
+    def summary(self):
+        return \
+            "Num. transactions        : {:}\n" \
+            "Difficulty               : {:}\n" \
+            "Previous block           : {:}\n" \
+            "Target                   : {:}\n" \
+                .format(
+                len(self._transactions),
+                self._difficulty,
+                bin_to_hex(self.hash_prev),
+                bin_str(self.target, pad=self._hash_f.bits),
+            )
+
+    @property
+    def details(self):
+        return self.summary + \
+               "Hash (bin)               : {:}\n" \
+               "Hash (hex)               : {:}\n" \
+               "Nonce                    : {:010d}\n" \
+               "Extra-nonce              : {:010d}\n" \
+               "Merkle root              : {:}\n" \
+                   .format(
+                   bin_str(bytes_to_int(self.hash), pad=self._hash_f.bits),
+                   bin_to_hex(self.hash),
+                   self.nonce,
+                   self.extra_nonce,
+                   bin_to_hex(self.merkle_root)
+               )
+
+    def __str__(self):
+        return self.details
+
     def mine_one(self):
-        hash = self._hash_f(self._bytes + int_to_bytes(self._nonce))
+        curr_hash = self._hash_f(self._bytes + int_to_bytes(self._nonce))
 
         # If target is meet, we found the nonce
-        if bytes_to_int(hash) < self.target:
-            return True, self._nonce, hash
+        if bytes_to_int(curr_hash) < self.target:
+            self._hash = curr_hash
+            return True, self._nonce, self._hash
 
         # If target is not met proceed with the next nonce on next call
         self._nonce += 1
@@ -121,4 +171,4 @@ class Block:
             self.extra_nonce += 1
             self._nonce = 0
 
-        return False, self._nonce, hash
+        return False, self._nonce, curr_hash

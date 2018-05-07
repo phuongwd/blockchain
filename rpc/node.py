@@ -46,7 +46,7 @@ class BlockchainNode(service.Servicer):
         self.share_peers(config)
 
     def _log(self, *args):
-        console.log("{:}:{:5d} | ".format(self._host, self._port), *args)
+        console.log(*args, fill=64)
 
     def start(self):
         """

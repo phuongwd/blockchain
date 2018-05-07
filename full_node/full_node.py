@@ -5,11 +5,17 @@ from __future__ import (
     absolute_import, division, print_function, unicode_literals
 )
 
+import random
+import sys
+import time
+from queue import Queue
+from threading import Thread
 from typing import Iterable
 
-from blockchain import Transaction, favor_higher_fees, Block
+import blockchain
+from blockchain import Transaction, favor_higher_fees, Block, sha256
 from rpc import BlockchainNode
-from utils import PriorityQueue
+from utils import PriorityQueue, int_to_bytes, bin_str, bytes_to_int, bin_to_hex
 
 
 class FullNode(BlockchainNode):
@@ -25,18 +31,68 @@ class FullNode(BlockchainNode):
         """
         super(FullNode, self).__init__(config)
 
-        self._transactions = PriorityQueue(f_priority=favor_higher_fees)
+        self._transaction_queue = PriorityQueue(f_priority=favor_higher_fees)
+        self._block_queue = Queue()
         self._blocks = list()
 
+        self._public_key = int_to_bytes(random.randint(0, sys.maxsize))
+        self._hash_f = getattr(blockchain, config.hash_f)
+        self._hash_prev = int_to_bytes(0)
+        self._difficulty = config.difficulty
+        self._mining_throttle_ms = config.mining_throttle_ms
+
+        Thread(target=self.mine).start()
+
+    def mine(self):
+        hash_f = sha256
+
+        while True:
+            transactions = []
+            # for _ in range(5):
+            #     transaction = self._transaction_queue.get()
+            #     transactions.append(transaction)
+
+            block = Block(
+                hash_prev=self._hash_prev,
+                difficulty=self._difficulty,
+                transactions=transactions,
+                key=self._public_key,
+                hash_f=self._hash_f
+            )
+
+            self._log(
+                "Mining a new block:" + " " * 32 +
+                "\n{:}\n".format(block.summary)
+            )
+
+            found = False
+            while not found:
+                found, nonce, hash = block.mine_one()
+
+                sys.stdout.write("Nonce: {:010d} | Hash : {:}\r".format(
+                    nonce,
+                    bin_str(bytes_to_int(hash), pad=hash_f.bits)
+                ))
+
+                if found:
+                    self._log("Found a new block:" + " " * 32 +
+                              "\n{:}\n".format(block.details))
+                    self._block_queue.put(block)
+                    self._hash_prev = block.hash
+
+                # For the sake of demonstration we throttle mining
+                # to reduce CPU load
+                time.sleep(self._mining_throttle_ms / 1000)
+
     def get_transactions(self, _, __):
-        for transaction in self._transactions:
+        for transaction in self._transaction_queue:
             yield transaction.to_proto()
 
     def send_transactions(self, transactions: Iterable[Transaction], _):
         for transaction in transactions:
             transaction = Transaction.from_proto(transaction)
             if transaction is not None:
-                self._transactions.put(transaction)
+                self._transaction_queue.put(transaction)
 
         return self._messages.Empty()
 

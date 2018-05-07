@@ -3,6 +3,7 @@
 
 __all__ = [
     "bin_str",
+    "bin_to_hex",
     "bytes_to_int",
     "create_target",
     "console",
@@ -16,6 +17,7 @@ __all__ = [
 ]
 
 from .bin_str import bin_str
+from .bin_to_hex import bin_to_hex
 from .create_target import create_target
 from .dict_to_namedtuple import dict_to_namedtuple
 from .bytes_to_int import bytes_to_int
