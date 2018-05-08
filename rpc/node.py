@@ -196,6 +196,9 @@ class BlockchainNode(service.Servicer):
             self.schedule_peer_discovery(config)
 
     def schedule_peer_discovery(self, config):
+        """
+        Schedules peer discovery on a separate thread
+        """
         if config.peer_discovery_interval > 0:
             threading.Timer(
                 config.peer_discovery_interval,
@@ -227,6 +230,9 @@ class BlockchainNode(service.Servicer):
             self.schedule_peer_sharing(config)
 
     def schedule_peer_sharing(self, config):
+        """
+        Schedules peer sharing on a separate thread
+        """
         if config.peer_sharing_interval > 0:
             threading.Timer(
                 config.peer_sharing_interval,
