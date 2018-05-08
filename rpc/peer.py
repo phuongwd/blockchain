@@ -10,7 +10,7 @@ from typing import Iterable
 import grpc
 
 from rpc import Service
-from utils import random_string
+from utils import random_string, console
 
 service = Service()
 
@@ -122,6 +122,18 @@ class Peer:
             for p in ps:
                 yield p
 
-        # TODO: self.log_debug("> send_peers to {:}".format(peer))
+        console.debug("> send_peers to {:}".format(self))
         self._stub.send_peers(peer_generator(peers))
         return True
+
+    def get_transactions(self):
+        pass  # TODO
+
+    def send_transactions(self):
+        pass  # TODO
+
+    def get_blocks(self):
+        pass  # TODO
+
+    def send_blocks(self):
+        pass  # TODO

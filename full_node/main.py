@@ -10,7 +10,7 @@ import sys
 
 from full_node import FullNode
 from rpc import Peer
-from utils import dict_to_namedtuple, console
+from utils import dict_to_namedtuple, Verbosity
 
 HOST = "localhost"
 
@@ -38,7 +38,7 @@ def main():
         "hash_f": "sha256",
         "difficulty": 9,
         "mining_throttle_ms": 10,
-        "verbosity": console.Verbosity.info
+        "verbosity": Verbosity.info
     })
 
     node = FullNode(config)

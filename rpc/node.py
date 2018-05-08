@@ -26,7 +26,6 @@ class BlockchainNode(service.Servicer):
         Base class for servers that implement blockchain service
         """
         super(BlockchainNode, self).__init__()
-        self._config = config
         self._host = config.host
         self._port = int(config.port)
         self._server = grpc.server(
@@ -47,28 +46,12 @@ class BlockchainNode(service.Servicer):
         self.schedule_peer_discovery(config)
         self.schedule_peer_sharing(config)
 
-    def _log(self, *args, verbosity=console.Verbosity.info):
-        if self._config.verbosity >= verbosity:
-            console.log(*args, fill=64)
-
-    def log_error(self, *args):
-        self._log(*args, verbosity=console.Verbosity.error)
-
-    def log_warning(self, *args):
-        self._log(*args, verbosity=console.Verbosity.warning)
-
-    def log_info(self, *args):
-        self._log(*args, verbosity=console.Verbosity.info)
-
-    def log_debug(self, *args):
-        self._log(*args, verbosity=console.Verbosity.debug)
-
     def start(self):
         """
         Starts the RPC server
         """
         self._server.start()
-        self.log_info("Listening on port {:}".format(self._port))
+        console.info("Listening on port {:}".format(self._port))
 
     def stop(self):
         """
@@ -92,7 +75,7 @@ class BlockchainNode(service.Servicer):
         if self.is_known_peer(peer):
             return False
 
-        self.log_info("> add  peer:  {:}".format(peer))
+        console.info("> add  peer:  {:}".format(peer))
         with self._known_peers_lock:
             self._known_peers.add(peer)
 
@@ -121,7 +104,7 @@ class BlockchainNode(service.Servicer):
         if not is_connected:
             return False
 
-        self.log_debug("> get_peers from {:}".format(peer))
+        console.debug("> get_peers from {:}".format(peer))
 
         # Receve the initial list
         rcvd_peers = peer.get_peers()
@@ -153,7 +136,7 @@ class BlockchainNode(service.Servicer):
         """
 
         if config.peer_discovery_interval >= 0:
-            self.log_debug("> discovering peers")
+            console.debug("> discovering peers")
 
             with self._known_peers_lock:
                 known_peers = set(self._known_peers)
@@ -181,7 +164,7 @@ class BlockchainNode(service.Servicer):
         """
 
         if config.peer_sharing_interval >= 0:
-            self.log_debug("> sharing peers")
+            console.debug("> sharing peers")
 
             with self._known_peers_lock:
                 known_peers = set(self._known_peers)
@@ -228,19 +211,19 @@ class BlockchainNode(service.Servicer):
         with self._known_peers_lock:
             known_peers = list(self._known_peers)
 
-        self.log_debug("< req: get_peers")
+        console.debug("< req: get_peers")
         for peer in known_peers:
-            self.log_debug("> sent peer: {:}".format(peer))
+            console.debug("> sent peer: {:}".format(peer))
             yield peer.to_proto()
 
     def send_peers(self, peers, __):
         """
         Server handler that accepts peers on `send_peers` request.
         """
-        self.log_debug("< req: send_peers")
+        console.debug("< req: send_peers")
         for peer in peers:
             peer = Peer.from_proto(peer)
-            self.log_debug("> rcvd peer: {:}".format(peer))
+            console.debug("> rcvd peer: {:}".format(peer))
             self.maybe_add_peer(peer)
 
         return service.messages.Empty()

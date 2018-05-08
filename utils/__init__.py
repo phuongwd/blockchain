@@ -13,11 +13,13 @@ __all__ = [
     "PriorityQueue",
     "random_string",
     "resolve_parent_path",
+    "Verbosity",
     "wait_forever"
 ]
 
 from .bin_str import bin_str
 from .bin_to_hex import bin_to_hex
+from .console import console, Verbosity
 from .create_target import create_target
 from .dict_to_namedtuple import dict_to_namedtuple
 from .bytes_to_int import bytes_to_int

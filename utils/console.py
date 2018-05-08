@@ -45,3 +45,31 @@ def log(*args, fill=0):
 
 def error(*args, fill=0):
     return _console_write_with_datetime(*args, f=sys.stderr, fill=fill)
+
+
+class Console:
+    verbosity = Verbosity.info
+
+    @classmethod
+    def log(cls, *args, verbosity=Verbosity.info):
+        if cls.verbosity >= verbosity:
+            log(*args, fill=64)
+
+    @classmethod
+    def error(cls, *args):
+        cls.log(*args, verbosity=Verbosity.error)
+
+    @classmethod
+    def warning(cls, *args):
+        cls.log(*args, verbosity=Verbosity.warning)
+
+    @classmethod
+    def info(cls, *args):
+        cls.log(*args, verbosity=Verbosity.info)
+
+    @classmethod
+    def debug(cls, *args):
+        cls.log(*args, verbosity=Verbosity.debug)
+
+
+console = Console
