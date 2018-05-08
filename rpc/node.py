@@ -186,11 +186,6 @@ class BlockchainNode(service.Servicer):
             self._known_peers_lock.release()
 
             for peer in known_peers:
-                is_connected = peer.connect()
-
-                if not is_connected:
-                    continue
-
                 self.recv_peers_from(peer)
 
             self.schedule_peer_discovery(config)
@@ -220,11 +215,6 @@ class BlockchainNode(service.Servicer):
             self._known_peers_lock.release()
 
             for peer in known_peers:
-                is_connected = peer.connect()
-
-                if not is_connected:
-                    continue
-
                 self.send_peers_to(peer)
 
             self.schedule_peer_sharing(config)
