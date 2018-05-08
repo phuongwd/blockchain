@@ -5,6 +5,8 @@ from __future__ import (
     absolute_import, division, print_function, unicode_literals
 )
 
+from typing import Iterable
+
 import grpc
 
 from rpc import Service
@@ -32,10 +34,6 @@ class Peer:
     @property
     def address(self):
         return self._address
-
-    @property
-    def stub(self):
-        return self._stub
 
     @property
     def is_connected(self):
@@ -98,3 +96,32 @@ class Peer:
         self._stub = service.Stub(self._channel)
 
         return self.is_connected
+
+    def get_peers(self):
+        """
+        Sends get_peers request
+        """
+        # Possibly re-connect
+        is_connected = self.connect()
+        if not is_connected:
+            return []
+
+        return self._stub.get_peers(service.messages.Empty())
+
+    def send_peers(self, peers: Iterable['Peer']):
+        """
+        Sends send_peers request
+        """
+
+        # Possibly re-connect
+        is_connected = self.connect()
+        if not is_connected:
+            return False
+
+        def peer_generator(ps):
+            for p in ps:
+                yield p
+
+        # TODO: self.log_debug("> send_peers to {:}".format(peer))
+        self._stub.send_peers(peer_generator(peers))
+        return True

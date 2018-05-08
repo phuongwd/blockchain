@@ -30,7 +30,7 @@ def main():
         "port": int(port),
         "known_peers": [
             Peer(host=DNS_SEED_HOST, port=DNS_SEED_PORT),
-            Peer(host=VIEWER_HOST, port=VIEWER_PORT),
+            Peer(host=VIEWER_HOST, port=VIEWER_PORT)
         ],
         "peer_discovery_interval": 3,
         "peer_sharing_interval": 3,

@@ -9,11 +9,10 @@ import random
 import sys
 import time
 from queue import Queue
-from threading import Thread
-from typing import Iterable, List
+from typing import Iterable
 
 import blockchain
-from blockchain import Transaction, favor_higher_fees, Block, sha256
+from blockchain import Transaction, favor_higher_fees, Block
 from blockchain.fake_transaction_generator import FakeTransactionGenerator
 from rpc import BlockchainNode
 from utils import PriorityQueue, int_to_bytes, bin_str, bytes_to_int
@@ -44,7 +43,7 @@ class FullNode(BlockchainNode):
         self._transaction_generator = FakeTransactionGenerator(self._hash_f)
 
         # Launch mining thread (consumes transactions, produces blocks)
-        Thread(target=self.mine).start()
+        # Thread(target=self.mine).start()
 
     def mine(self):
         """
@@ -97,6 +96,64 @@ class FullNode(BlockchainNode):
             self._hash_prev = block.hash
 
         return found
+
+    # def discover_blocks(self, config):
+    #     if config.block_discovery_interval >= 0:
+    #         self.log_debug("> discovering blocks")
+    #
+    #         self._known_peers_lock.acquire()
+    #         known_peers = list(self._known_peers)
+    #         self._known_peers_lock.release()
+    #
+    #         for peer in known_peers:
+    #             self.recv_peers_from(peer)
+    #
+    #         self.schedule_peer_discovery(config)
+    #
+    # def schedule_peer_discovery(self, config):
+    #     """
+    #     Schedules peer discovery on a separate thread
+    #     """
+    #     if config.peer_discovery_interval > 0:
+    #         threading.Timer(
+    #             config.peer_discovery_interval,
+    #             function=self.discover_peers,
+    #             args=[config]
+    #         ).start()
+    #
+    # def share_peers(self, config):
+    #     """
+    #     Run peer sharing and then schedule it to run periodically.
+    #     Peer sharing consist of sending all known peers to all known peers.
+    #     """
+    #
+    #     if config.peer_sharing_interval >= 0:
+    #         self.log_debug("> sharing peers")
+    #
+    #         self._known_peers_lock.acquire()
+    #         known_peers = set(self._known_peers)
+    #         self._known_peers_lock.release()
+    #
+    #         for peer in known_peers:
+    #             is_connected = peer.connect()
+    #
+    #             if not is_connected:
+    #                 continue
+    #
+    #             self.send_peers_to(peer)
+    #
+    #         self.schedule_peer_sharing(config)
+    #
+    # def schedule_peer_sharing(self, config):
+    #     """
+    #     Schedules peer sharing on a separate thread
+    #     """
+    #     if config.peer_sharing_interval > 0:
+    #         threading.Timer(
+    #             config.peer_sharing_interval,
+    #             function=self.share_peers,
+    #             args=[config]
+    #         ).start()
 
     def get_transactions(self, _, __):
         """
