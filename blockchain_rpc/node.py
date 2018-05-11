@@ -13,11 +13,10 @@ from typing import Iterable
 
 import grpc
 
-from blockchain import Block, Transaction
-from rpc import Peer, Service
+import blockchain_rpc
 from utils import wait_forever, console
 
-service = Service()
+service = blockchain_rpc.Service()
 
 
 class BlockchainNode(service.Servicer):
@@ -26,6 +25,7 @@ class BlockchainNode(service.Servicer):
         Base class for servers that implement blockchain service
         """
         super(BlockchainNode, self).__init__()
+        self._config = config
         self._host = config.host
         self._port = int(config.port)
         self._server = grpc.server(
@@ -35,7 +35,8 @@ class BlockchainNode(service.Servicer):
             "{:}:{:}".format(config.host, config.port))
 
         self._address = 0
-        self._this_node = Peer(host=config.host, port=config.port)
+        self._this_node = blockchain_rpc.Peer(host=config.host,
+                                              port=config.port)
 
         self._known_peers = set()
         self._known_peers_lock = Lock()
@@ -43,8 +44,8 @@ class BlockchainNode(service.Servicer):
         for peer in config.known_peers:
             self.maybe_add_peer(peer)
 
-        self.schedule_peer_discovery(config)
-        self.schedule_peer_sharing(config)
+        self.schedule_peer_discovery()
+        self.schedule_peer_sharing()
 
     def start(self):
         """
@@ -71,7 +72,7 @@ class BlockchainNode(service.Servicer):
         except KeyboardInterrupt:
             self.stop()
 
-    def maybe_add_peer(self, peer: Peer):
+    def maybe_add_peer(self, peer: blockchain_rpc.Peer):
         if self.is_known_peer(peer):
             return False
 
@@ -81,18 +82,18 @@ class BlockchainNode(service.Servicer):
 
         return peer.connect()
 
-    def send_peers_to(self, peer: Peer, include_self: bool = True):
+    def send_peers_to(self, peer: blockchain_rpc.Peer,
+                      include_self: bool = True):
         """
         Sends send_peers request to a given peer, effectively broadcasting
         the list of currently known peers.
         """
-        known_peers = list(self._known_peers)
-        peers = [peer.to_proto() for peer in known_peers]
+        peers = list(self._known_peers)
         if include_self:
-            peers.append(self._this_node.to_proto())
+            peers.append(self._this_node)
         return peer.send_peers(peers)
 
-    def recv_peers_from(self, peer: Peer):
+    def recv_peers_from(self, peer: blockchain_rpc.Peer):
         """
          Sends get_peers request to a given peer recursively, accepting a list
          of peers currently known to that peer. Then send the same request
@@ -111,9 +112,8 @@ class BlockchainNode(service.Servicer):
         peer_queue = Queue()
 
         for rcvd_peer in rcvd_peers:
-            peer = Peer.from_proto(rcvd_peer)
-            if not self.is_known_peer(peer):
-                peer_queue.put(peer)
+            if not self.is_known_peer(rcvd_peer):
+                peer_queue.put(rcvd_peer)
 
         # Explore the initial list recursively
         while not peer_queue.empty():
@@ -121,13 +121,12 @@ class BlockchainNode(service.Servicer):
             self.maybe_add_peer(rcvd_peer)
             rcvd_peers = rcvd_peer.get_peers()
             for rcvd_peer in rcvd_peers:
-                peer = Peer.from_proto(rcvd_peer)
-                if not self.is_known_peer(peer):
-                    peer_queue.put(peer)
+                if not self.is_known_peer(rcvd_peer):
+                    peer_queue.put(rcvd_peer)
 
         return True
 
-    def discover_peers(self, config):
+    def discover_peers(self):
         """
         Run peer discovery and then schedule it to run periodically.
         Peer discovery consists of requesting known peers from all known peers.
@@ -135,7 +134,7 @@ class BlockchainNode(service.Servicer):
         including, possibly, DNS-seeder nodes.
         """
 
-        if config.peer_discovery_interval >= 0:
+        if self._config.peer_discovery_interval >= 0:
             console.debug("> discovering peers")
 
             with self._known_peers_lock:
@@ -144,26 +143,25 @@ class BlockchainNode(service.Servicer):
             for peer in known_peers:
                 self.recv_peers_from(peer)
 
-            self.schedule_peer_discovery(config)
+            self.schedule_peer_discovery()
 
-    def schedule_peer_discovery(self, config):
+    def schedule_peer_discovery(self):
         """
         Schedules peer discovery on a separate thread
         """
-        if config.peer_discovery_interval > 0:
+        if self._config.peer_discovery_interval > 0:
             threading.Timer(
-                config.peer_discovery_interval,
-                function=self.discover_peers,
-                args=[config]
+                self._config.peer_discovery_interval,
+                function=self.discover_peers
             ).start()
 
-    def share_peers(self, config):
+    def share_peers(self):
         """
         Run peer sharing and then schedule it to run periodically.
         Peer sharing consist of sending all known peers to all known peers.
         """
 
-        if config.peer_sharing_interval >= 0:
+        if self._config.peer_sharing_interval >= 0:
             console.debug("> sharing peers")
 
             with self._known_peers_lock:
@@ -172,20 +170,19 @@ class BlockchainNode(service.Servicer):
             for peer in known_peers:
                 self.send_peers_to(peer)
 
-            self.schedule_peer_sharing(config)
+            self.schedule_peer_sharing()
 
-    def schedule_peer_sharing(self, config):
+    def schedule_peer_sharing(self):
         """
         Schedules peer sharing on a separate thread
         """
-        if config.peer_sharing_interval > 0:
+        if self._config.peer_sharing_interval > 0:
             threading.Timer(
-                config.peer_sharing_interval,
-                function=self.share_peers,
-                args=[config]
+                self._config.peer_sharing_interval,
+                function=self.share_peers
             ).start()
 
-    def is_known_peer(self, peer: Peer) -> bool:
+    def is_known_peer(self, peer: blockchain_rpc.Peer) -> bool:
         """
         Verifies if a given peer is already known to us
         """
@@ -222,7 +219,7 @@ class BlockchainNode(service.Servicer):
         """
         console.debug("< req: send_peers")
         for peer in peers:
-            peer = Peer.from_proto(peer)
+            peer = blockchain_rpc.Peer.from_proto(peer)
             console.debug("> rcvd peer: {:}".format(peer))
             self.maybe_add_peer(peer)
 
@@ -235,12 +232,12 @@ class BlockchainNode(service.Servicer):
         """
         yield from []
 
-    def send_transactions(self, transactions: Iterable[Transaction], _):
+    def send_transactions(self, transactions: Iterable, _):
         """
         RPC server handler triggered on send_transactions RPC call.
         Generic node does not handle this call (ignores the input).
         """
-        return self._messages.Empty()
+        return service.messages.Empty()
 
     def get_blocks(self, _, __):
         """
@@ -249,9 +246,9 @@ class BlockchainNode(service.Servicer):
         """
         yield from []
 
-    def send_blocks(self, blocks: Iterable[Block], _):
+    def send_blocks(self, blocks: Iterable, _):
         """
         RPC server handler triggered on send_blocks RPC call.
         Generic node does not handle this call (ignores the input).
         """
-        return self._messages.Empty()
+        return service.messages.Empty()

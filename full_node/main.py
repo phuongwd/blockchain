@@ -9,8 +9,9 @@ import os
 import sys
 
 from full_node import FullNode
-from rpc import Peer
+from blockchain_rpc import Peer
 from utils import dict_to_namedtuple, Verbosity
+from utils.console import Console
 
 HOST = "localhost"
 
@@ -34,12 +35,16 @@ def main():
         ],
         "peer_discovery_interval": 3,
         "peer_sharing_interval": 3,
+        "transaction_discovery_interval": 3,
+        "transaction_sharing_interval": 3,
+        "block_discovery_interval": 3,
+        "block_sharing_interval": 3,
         "max_workers": 3,
-        "hash_f": "sha256",
         "difficulty": 9,
-        "mining_throttle_ms": 10,
-        "verbosity": Verbosity.info
+        "mining_throttle_ms": 10
     })
+
+    # Console.verbosity = Verbosity.debug
 
     node = FullNode(config)
     node.listen()

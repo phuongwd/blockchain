@@ -12,20 +12,27 @@ from blockchain import (
     TransactionInput, constants, TransactionOutput, Transaction
 )
 
+from blockchain_rpc import Service
+
 from utils import int_to_bytes
+
+service = Service()
 
 
 class FakeTransactionGenerator:
-    def __init__(self, hash_f):
-        self._hash_f = hash_f
+    def __init__(self):
+        pass
 
     def generate(self):
         inputs = \
             [
                 TransactionInput(
-                    src_hash=int_to_bytes(random.randint(0, sys.maxsize)),
-                    src_idx=random.randint(0, sys.maxsize),
-                    signature=int_to_bytes(random.randint(0, sys.maxsize)),
+                    src_hash=int_to_bytes(
+                        random.randint(0, sys.maxsize)),
+                    src_idx=random.randint(
+                        0, constants.TRANSACTION_MAX_OUTPUTS),
+                    signature=int_to_bytes(
+                        random.randint(0, sys.maxsize)),
                 )
                 for _ in range(constants.TRANSACTION_MAX_INPUTS)
             ]
@@ -33,7 +40,7 @@ class FakeTransactionGenerator:
         outputs = \
             [
                 TransactionOutput(
-                    amount=random.randint(0, sys.maxsize),
+                    amount=random.randint(0, 1000),
                     key=int_to_bytes(random.randint(0, sys.maxsize)),
                 )
                 for _ in range(constants.TRANSACTION_MAX_OUTPUTS)
@@ -41,6 +48,5 @@ class FakeTransactionGenerator:
 
         return Transaction(
             inputs=inputs,
-            outputs=outputs,
-            hash_f=self._hash_f
+            outputs=outputs
         )

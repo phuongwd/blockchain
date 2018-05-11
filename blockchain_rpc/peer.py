@@ -9,10 +9,11 @@ from typing import Iterable
 
 import grpc
 
-from rpc import Service
+import blockchain
+import blockchain_rpc
 from utils import random_string, console
 
-service = Service()
+service = blockchain_rpc.Service()
 
 
 class Peer:
@@ -101,39 +102,63 @@ class Peer:
         """
         Sends get_peers request
         """
-        # Possibly re-connect
+
         is_connected = self.connect()
         if not is_connected:
             return []
 
-        return self._stub.get_peers(service.messages.Empty())
+        console.debug("< get_peers from {:}".format(self))
+        peers = list(self._stub.get_peers(service.messages.Empty()))
+        return [Peer.from_proto(peer) for peer in peers]
 
     def send_peers(self, peers: Iterable['Peer']):
         """
         Sends send_peers request
         """
 
-        # Possibly re-connect
         is_connected = self.connect()
         if not is_connected:
             return False
 
-        def peer_generator(ps):
-            for p in ps:
-                yield p
-
         console.debug("> send_peers to {:}".format(self))
-        self._stub.send_peers(peer_generator(peers))
+        self._stub.send_peers(iter([peer.to_proto() for peer in peers]))
         return True
 
     def get_transactions(self):
-        pass  # TODO
+        is_connected = self.connect()
+        if not is_connected:
+            return []
 
-    def send_transactions(self):
-        pass  # TODO
+        console.debug("< get_transactions from {:}".format(self))
+        transactions = list(
+            self._stub.get_transactions(service.messages.Empty()))
+        return [blockchain.Transaction.from_proto(tx) for tx in transactions]
+
+    def send_transactions(self, transactions):
+        is_connected = self.connect()
+        if not is_connected:
+            return False
+
+        console.debug("> send_transactions to {:}".format(self))
+        transactions = [transaction.to_proto() for transaction in transactions]
+        self._stub.send_transactions(iter(transactions))
+        return True
 
     def get_blocks(self):
-        pass  # TODO
+        is_connected = self.connect()
+        if not is_connected:
+            return []
 
-    def send_blocks(self):
-        pass  # TODO
+        console.debug("> get_blocks from {:}".format(self))
+        blocks = list(self._stub.get_blocks(service.messages.Empty()))
+        return [blockchain.Block.from_proto(blocks) for blocks in blocks]
+
+    def send_blocks(self, blocks):
+        is_connected = self.connect()
+        if not is_connected:
+            return False
+
+        console.debug("> send_blocks to {:}".format(self))
+        blocks = [block.to_proto() for block in blocks]
+        self._stub.send_blocks(iter(blocks))
+        return True

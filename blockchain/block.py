@@ -5,19 +5,17 @@ from __future__ import (
     absolute_import, division, print_function, unicode_literals
 )
 
-import os
-import sys
 from typing import List
 
-import protol
-
-from blockchain import (
-    Transaction, TransactionOutput, md5, MerkleTree, constants
-)
+import blockchain
+from blockchain import MerkleTree, constants
+from blockchain_rpc import Service
 
 from utils import (
     bin_str, bytes_to_int, create_target, bin_to_hex, int_to_bytes
 )
+
+service = Service()
 
 
 class Block:
@@ -25,34 +23,22 @@ class Block:
             self,
             hash_prev: bytes,
             difficulty: int,
-            transactions: List[Transaction],
-            key: bytes,
-            hash_f
+            transactions: List,
+            nonce: int = 0
     ):
         self._hash_prev = hash_prev
         self._difficulty = difficulty
-        self._target = create_target(hash_f.bits, difficulty)
-        self._hash_f = hash_f
-
-        # Prepend conbase transaction
-        coinbase_output = TransactionOutput(
-            amount=constants.BLOCK_COINBASE_AMOUNT, key=key)
-
-        coinbase_tx = Transaction(
-            inputs=[],
-            outputs=[coinbase_output],
-            hash_f=self._hash_f
-        )
-
-        self._transactions = [coinbase_tx] + transactions
+        self._target = create_target(service.hash_f.bits, difficulty)
+        self._transactions = transactions
 
         # Data to be computed
-        self._nonce = 0
+        self._nonce = nonce
         self._hash = None
         self._merkle_root = None
         self._merkle_tree = None
         self._bytes = None
 
+        # FIXME: invalidates blocks incoming from proto
         # Set first extra nonce (triggers update)
         self.extra_nonce = 0
 
@@ -98,7 +84,7 @@ class Block:
         # Recompute the tree of transactions
         merkle_tree = MerkleTree(
             leaves=[tx.hash for tx in self._transactions],
-            f_hash=lambda tx: self._hash_f(tx)
+            f_hash=lambda tx: service.hash_f(tx)
         )
         self._merkle_root = merkle_tree.root_hash
         self._merkle_tree = merkle_tree.data
@@ -109,13 +95,10 @@ class Block:
         assert 0 <= self._nonce < 2 ** 32, \
             "Nonce should be a 32-bit unsigned integer"
 
-        PROTO_PATH = os.path.join("..", "protos", "blockchain.proto")
-        messages, _ = protol.load(PROTO_PATH)
-
-        return messages.Block(
+        return service.messages.Block(
             version=1,
-            hash=self._hash,
             hash_prev=self._hash_prev,
+            hash=self._hash,
             difficulty=self._difficulty,
             nonce=self._nonce,
             merkle_root=self._merkle_root,
@@ -123,9 +106,42 @@ class Block:
         )
 
     @staticmethod
-    def from_proto(block):
-        # TODO
-        pass
+    def from_proto(proto):
+        # TODO: validate the incoming block
+        transactions = [
+            blockchain.Transaction.from_proto(tx)
+            for tx in proto.transactions
+        ]
+
+        # Block should contain at least 1 transaction: a coinbase transaction
+        if 1 < len(transactions) < constants.BLOCK_MAX_TRANSACTIONS:
+            return None
+
+        incoming_nonce = proto.nonce
+        incoming_difficulty = proto.difficulty
+        incoming_hash_prev = proto.hash_prev
+
+        # incoming_extra_nonce = transactions[0].extra_nonce
+        # incoming_hash = proto.hash
+        # incoming_merkle_root = proto.merkle_root
+
+        # TODO: Ensure difficulty is correct
+        # TODO: Ensure hash < target
+        # TODO: Ensure hash_prev exists
+
+        # TODO: Verify transactions:
+        # TODO: - Ensure transactions inputs and outputs exist
+        # TODO: - Ensure transactions not overspend
+        # TODO: - Prevent double-spend
+
+        block = Block(
+            hash_prev=incoming_hash_prev,
+            difficulty=incoming_difficulty,
+            transactions=transactions,
+            nonce=incoming_nonce
+        )
+
+        return block
 
     @property
     def summary(self):
@@ -138,7 +154,7 @@ class Block:
                 len(self._transactions),
                 self._difficulty,
                 bin_to_hex(self.hash_prev),
-                bin_str(self.target, pad=self._hash_f.bits),
+                bin_str(self.target, pad=service.hash_f.bits),
             )
 
     @property
@@ -150,7 +166,7 @@ class Block:
                "Extra-nonce              : {:010d}\n" \
                "Merkle root              : {:}\n" \
                    .format(
-                   bin_str(bytes_to_int(self.hash), pad=self._hash_f.bits),
+                   bin_str(bytes_to_int(self.hash), pad=service.hash_f.bits),
                    bin_to_hex(self.hash),
                    self.nonce,
                    self.extra_nonce,
@@ -161,7 +177,7 @@ class Block:
         return self.details
 
     def mine_one(self):
-        curr_hash = self._hash_f(self._bytes + int_to_bytes(self._nonce))
+        curr_hash = service.hash_f(self._bytes + int_to_bytes(self._nonce))
 
         # If target is meet, we found the nonce
         if bytes_to_int(curr_hash) < self.target:

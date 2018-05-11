@@ -5,29 +5,27 @@ from __future__ import (
     absolute_import, division, print_function, unicode_literals
 )
 
-import os
 from functools import reduce
 from typing import List, Callable, Any
 
-import protol
+import blockchain
+from blockchain_rpc import Service
 
-from blockchain import TransactionInput, TransactionOutput
+service = Service()
 
 
 class Transaction:
     def __init__(
             self,
-            inputs: List[TransactionInput],
-            outputs: List[TransactionOutput],
-            hash_f: Callable[[Any], bytes]
+            inputs: List,
+            outputs: List,
+            extra_nonce: int = 0
     ):
         self._inputs = inputs
         self._outputs = outputs
-        self._extra_nonce = 0
+        self._extra_nonce = extra_nonce
 
         self._fee = 0
-
-        self._hash_f = hash_f
         self._hash = None
         self.update()
 
@@ -62,33 +60,32 @@ class Transaction:
         self.update()
 
     def update(self):
-        self._hash = self._hash_f(self.bytes)
+        self._hash = service.hash_f(self.bytes)
 
     def to_proto(self):
-        PROTO_PATH = os.path.join("..", "protos", "blockchain.proto")
-        messages, _ = protol.load(PROTO_PATH)
-
-        serialized_inputs = [
-            messages.TransactionInput()
-            for input in self._inputs
-        ]
-
-        serialized_outputs = [
-            messages.TransactionOutput()
-            for output in self._outputs
-        ]
-
         assert 0 <= self._extra_nonce < 2 ** 32, \
             "Extra nonce should be a 32-bit unsigned integer"
 
-        return messages.Transaction(
+        inputs = [i.to_proto() for i in self._inputs]
+        outputs = [o.to_proto() for o in self._outputs]
+
+        return service.messages.Transaction(
             version=1,
-            hash=self._hash,
             extra_nonce=self._extra_nonce,
-            inputs=serialized_inputs,
-            outputs=serialized_outputs
+            inputs=inputs,
+            outputs=outputs
         )
 
-    def from_proto(self):
-        # TODO
-        pass
+    @staticmethod
+    def from_proto(proto):
+        inputs = list(
+            [blockchain.TransactionInput.from_proto(i) for i in proto.inputs])
+
+        outputs = list(
+            [blockchain.TransactionOutput.from_proto(o) for o in proto.outputs])
+
+        return Transaction(
+            inputs=inputs,
+            outputs=outputs,
+            extra_nonce=proto.extra_nonce
+        )

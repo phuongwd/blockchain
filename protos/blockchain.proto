@@ -52,10 +52,9 @@ message TransactionOutput {
 // It is  defined by a set of inputs and outputs and is reffered to by its hash.
 message Transaction {
     int32 version = 1; // protocol version
-    bytes hash = 2; // hash of this transaction
-    uint32 extra_nonce = 3; // extra nonce for coinbase transaction
-    repeated TransactionInput inputs = 4; // inputs
-    repeated TransactionOutput outputs = 5; // outputs
+    uint32 extra_nonce = 2; // extra nonce for coinbase transaction
+    repeated TransactionInput inputs = 3; // inputs
+    repeated TransactionOutput outputs = 4; // outputs
 }
 
 // Block is a single unit of a blockchain.
@@ -64,7 +63,7 @@ message Transaction {
 // previous block in the blockchain. The blocks are being mined by full nodes.
 message Block {
     int32 version = 1; // protocol version
-    bytes hash = 2; // hash of this block, including nonce
+    bytes hash = 2;
     bytes hash_prev = 3; // hash of the previous block in the blockchain
     int32 difficulty = 4; // target difficulty of the puzzle
     uint32 nonce = 5; // nonce that complements original block hash to target hash
