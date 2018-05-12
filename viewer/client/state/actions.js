@@ -7,11 +7,11 @@ const Actions = {
   TRANSACTIONS_SENT: 'TRANSACTIONS_SENT',
   BLOCKS_SENT: 'BLOCKS_SENT',
 
-  refresh: (data) => {
+  refresh: () => {
     return {
       type: Actions.REFRESH_REQUESTED,
       error: false,
-      payload: { data },
+      payload: {},
     }
   },
 

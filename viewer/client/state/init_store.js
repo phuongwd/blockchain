@@ -6,10 +6,11 @@ import { composeWithDevTools } from 'redux-devtools-extension'
 import config from '../client.config'
 
 import reducer from './reducer'
-import { clientOnlySagas, clientServerSagas } from './sagas'
+import { websocketSagas, normalSagas } from './sagas'
 
 const sagaMiddleware = createSagaMiddleware()
-const middleware = [sagaMiddleware, thunk]
+const websocketMiddleware = createSagaMiddleware()
+const middleware = [sagaMiddleware, thunk, websocketMiddleware]
 
 if(!config.IS_PRODUCTION) {
   middleware.push(require('redux-immutable-state-invariant').default())
@@ -18,7 +19,7 @@ if(!config.IS_PRODUCTION) {
 let enhancer = applyMiddleware(...middleware)
 enhancer = composeWithDevTools(enhancer)
 
-const initStore = (state, { isServer, req, query }) => {
+const initStore = (state, { isServer }) => {
   const store = createStore(
     reducer,
     state,
@@ -27,13 +28,13 @@ const initStore = (state, { isServer, req, query }) => {
 
   if(isServer) {
     store.runSagaTask = () => {
-      store.sagaTask = sagaMiddleware.run(clientServerSagas)
+      store.sagaTask = sagaMiddleware.run(normalSagas)
     }
   }
   else {
     store.runSagaTask = () => {
-      store.sagaTask = sagaMiddleware.run(clientOnlySagas)
-      store.sagaTask = sagaMiddleware.run(clientServerSagas)
+      store.sagaTask = sagaMiddleware.run(normalSagas)
+      websocketMiddleware.run(websocketSagas)
     }
   }
 

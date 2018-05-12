@@ -1,24 +1,24 @@
 import React from 'react'
-import { Button } from 'material-ui'
-
 import pageMiddleware from '../lib/page_middleware'
-import Actions from '../state/actions'
 
-import TableOfNodes from '../components/TableOfNodes'
+import TableOfBlock from '../components/TableOfBlock'
 
 
-const Index = ({ refresh, nodes, transactions, blocks }) => {
+const Index = ({ blocks }) => {
+  console.log(blocks)
   return (
     <>
       <h1>
-        Hello, Blockchain!
+        Blocks
       </h1>
 
-      <TableOfNodes nodes={nodes}/>
-
-      <Button variant={'raised'} color={'secondary'} onClick={refresh}>
-        Update
-      </Button>
+      {
+        blocks.map((block, i) => {
+          return (
+            <TableOfBlock key={i} block={block}/>
+          )
+        })
+      }
     </>
   )
 }
@@ -28,9 +28,7 @@ const mapStateToProps = state => ({
 })
 
 const mapDispatchToProps = dispatch => {
-  return {
-    refresh: () => dispatch(Actions.refresh()),
-  }
+  return {}
 }
 
 export default pageMiddleware(Index, {

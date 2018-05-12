@@ -82,6 +82,10 @@ if(config.USE_SSL) {
 // This is the part of the config that will be exposed to the client-side
 // JavaScript. Do not put any secrets here!
 process.env['configClient'] = JSON.stringify({
+  MODE,
+  IS_DEVELOPMENT,
+  IS_PRODUCTION,
+  IS_TESTING,
   APP_NAME: config.APP_NAME,
   APP_NAME_FRIENDLY: config.APP_NAME_FRIENDLY,
   SERVER_ROOT: config.SERVER_ROOT,

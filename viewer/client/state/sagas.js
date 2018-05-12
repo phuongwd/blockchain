@@ -1,3 +1,5 @@
+import _ from 'lodash'
+
 import WebSocket from 'isomorphic-ws'
 
 import { eventChannel } from 'redux-saga'
@@ -15,8 +17,8 @@ function* refresh() {
 }
 
 
-function* listenWebsockets() {
-  const channel = new eventChannel(emit => {
+const createChannel = () => {
+  return new eventChannel(emit => {
     const ws = new WebSocket(config.WEBSOCKET_URL, config.WEBSOCKET_PROTOCOL)
 
     ws.onmessage = (message) => {
@@ -25,6 +27,10 @@ function* listenWebsockets() {
 
     return ws.close
   })
+}
+
+function* listenWebsockets() {
+  const channel = yield call(createChannel)
 
   while(true) {
     const action = yield take(channel)
@@ -33,16 +39,16 @@ function* listenWebsockets() {
 }
 
 
-function* clientOnlySagas() {
+function* websocketSagas() {
   yield all([
     call(listenWebsockets),
   ])
 }
 
-function* clientServerSagas() {
+function* normalSagas() {
   yield all([
     takeLatest(Actions.REFRESH_REQUESTED, refresh),
   ])
 }
 
-export { clientOnlySagas, clientServerSagas }
+export { websocketSagas, normalSagas }

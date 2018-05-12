@@ -33,15 +33,15 @@ def main():
             Peer(host=DNS_SEED_HOST, port=DNS_SEED_PORT),
             Peer(host=VIEWER_HOST, port=VIEWER_PORT)
         ],
-        "peer_discovery_interval": 3,
-        "peer_sharing_interval": 3,
-        "transaction_discovery_interval": 3,
-        "transaction_sharing_interval": 3,
-        "block_discovery_interval": 3,
-        "block_sharing_interval": 3,
+        "peer_discovery_interval": 10,
+        "peer_sharing_interval": 5,
+        "transaction_discovery_interval": 10,
+        "transaction_sharing_interval": 5,
+        "block_discovery_interval": 10,
+        "block_sharing_interval": 5,
         "max_workers": 3,
-        "difficulty": 9,
-        "mining_throttle_ms": 10
+        "difficulty": 12,
+        "mining_throttle_ms": 100
     })
 
     # Console.verbosity = Verbosity.debug

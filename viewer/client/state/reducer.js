@@ -1,6 +1,7 @@
 import _ from 'lodash'
 
 import Actions from './actions'
+import merge from '../../common/merge'
 
 const stateDefault = {
   nodes: [],
@@ -10,12 +11,8 @@ const stateDefault = {
 
 const mergeNewData = (state, action, fieldName, orderBy) => {
   const oldData = _.get(state, fieldName, [])
-  const newData = _.get(action, 'payload.data.nodes', [])
-
-  let mergedData = [...oldData, ...newData]
-  mergedData = _.orderBy(mergedData, orderBy)
-  mergedData = _.uniqWith(mergedData, _.isEqual)
-  return mergedData
+  const newData = _.get(action, `payload.data.${fieldName}`, [])
+  return merge(oldData, newData, orderBy)
 }
 
 const reducer = (state = stateDefault, action) => {
@@ -37,6 +34,8 @@ const reducer = (state = stateDefault, action) => {
     const nodes = mergeNewData(state, action, 'nodes', ['host', 'port', 'address', 'type'])
     const blocks = mergeNewData(state, action, 'blocks', [])
     const transactions = mergeNewData(state, action, 'transactions', [])
+
+    console.log(action)
 
     return {
       ...state,

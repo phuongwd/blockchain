@@ -1,3 +1,5 @@
+import _ from 'lodash'
+
 import datetime from '../common/datetime'
 
 const createWebsocketsServer = (server, config) => {
@@ -19,9 +21,13 @@ const createWebsocketsServer = (server, config) => {
 
   wss.on('connection', (ws, req) => {
     const ip = req.connection.remoteAddress
-    console.info(`${datetime()} Peer ${ip} requested connection.`)
+    console.info(`${datetime()} Peer ${ip} connected.`)
   })
 
+  wss.on('close', (ws, req) => {
+    const ip = req.connection.remoteAddress
+    console.info(`${datetime()} Peer ${ip} disconnected.`)
+  })
   return wss
 }
 

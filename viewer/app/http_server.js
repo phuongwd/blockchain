@@ -1,5 +1,4 @@
 import fs from 'fs'
-import path from  'path'
 import http from 'http'
 import spdy from 'spdy'
 import sendJson from './lib/send_json'
@@ -11,115 +10,98 @@ import express from 'express'
 import cookieParser from 'cookie-parser'
 import bodyParser from 'body-parser'
 import clientIP from './lib/client_ip'
-import nextjsRoutes from '../client/next.routes'
 
 
-const createHttpServer = (controller, app, nextjs_app, config) => {
-  // Add timestamps for better logging
-  app.use((req, res, next) => {
-    req.begin = process.hrtime()
-    req.beginDatetime = datetime()
-    req.beginTimestamp = timestamp()
-    return next()
-  })
+const createHttpServer = (config) => {
+  class HttpServer {
+    constructor() {
+      this._app = express()
 
-  // Disable common vulnerabilities
-  app.disable('x-powered-by')
-  app.disable('query parser')
+      // Add timestamps for better logging
+      this._app.use((req, res, next) => {
+        req.begin = process.hrtime()
+        req.beginDatetime = datetime()
+        req.beginTimestamp = timestamp()
+        return next()
+      })
 
-  // Add convenience function to send JSON reply
-  app.use(sendJson)
+      // Disable common vulnerabilities
+      this._app.disable('x-powered-by')
+      this._app.disable('query parser')
 
-  // Add AJAX request detection for better logging
-  app.use(isXhr)
+      // Add convenience function to send JSON reply
+      this._app.use(sendJson)
 
-  // Add client IP to request for better logging
-  app.use((req, res, next) => {
-    req.srcIP = clientIP(req)
-    return next()
-  })
+      // Add AJAX request detection for better logging
+      this._app.use(isXhr)
 
-  // Use body and cookie parsers
-  app.use(bodyParser.json({
-    limit: '1kb',
-    type: ['json', 'application/json'],
-  }))
+      // Add client IP to request for better logging
+      this._app.use((req, res, next) => {
+        req.srcIP = clientIP(req)
+        return next()
+      })
 
-  app.use(cookieParser())
+      // Use body and cookie parsers
+      this._app.use(bodyParser.json({
+        limit: '1kb',
+        type: ['json', 'application/json'],
+      }))
 
-  // Logger
-  app.use(requestLogger({
-    printFunc: console.info,
-    maxFileSize: '100M',
-    interval: '7d',
-    verbose: config.LOG_ACCESS_VERBOSE,
-  }))
+      this._app.use(cookieParser())
 
-  // Serve static content
-  const staticHandler = (path) => {
-    return express.static(path, { index: false })
-  }
+      // Logger
+      this._app.use(requestLogger({
+        printFunc: console.info,
+        maxFileSize: '100M',
+        interval: '7d',
+        verbose: config.LOG_ACCESS_VERBOSE,
+      }))
 
-  app.get('/api/refresh', (req, res) => {
-    const data = controller.all()
-    return req.sendJson({ data })
-  })
+      // If USE_SSL is 0, insecure HTTP/1.1 server will run.
+      // If USE_SSL is 1, secure SLL HTTP/2 (Google's SPDY actually) server
+      // will run.
+      if(config.USE_SSL) {
+        let serverOptions = {
+          key: fs.readFileSync(config.SSL_KEY, { encoding: 'utf-8' }),
+          cert: fs.readFileSync(config.SSL_CERT, { encoding: 'utf-8' }),
+          passphrase: config.SSL_PASSPHRASE,
+        }
 
-  app.use('/', staticHandler('.build/client'))
-  app.use('/_next/static', staticHandler('.build/client/static'))
+        // If certificate authority chain file is provided, use it
+        if(config.SSL_CA) {
+          serverOptions = {
+            ca: fs.readFileSync(config.SSL_CA, { encoding: 'utf-8' }),
+          }
+        }
 
-  app.use('/_next/-', staticHandler('.build/client'))
-  app.use('/_next/*/-', staticHandler('.build/client'))
-
-  app.use('/_next/-/page', staticHandler('.build/client/bundles/pages'))
-  app.use('/_next/*/-/page', staticHandler('.build/client/bundles/pages'))
-
-  // Serve Next.js dynamic content
-  const nextjs_handler = nextjsRoutes.getRequestHandler(
-    nextjs_app, ({ req, res, route, query }) => {
-      return nextjs_app.render(req, res, route.page, query)
-    })
-
-  app.use(config.PUBLIC_PAGES, (req, res) => {
-    return nextjs_handler(req, res)
-  })
-
-  if(config.IS_DEVELOPMENT) {
-    app.get('/_next/*', (req, res) => {
-      return nextjs_handler(req, res)
-    })
-  }
-
-  // Send 404 if nothing found
-  app.use('*', (req, res) => {
-    return res.sendStatus(404)
-  })
-
-  // If USE_SSL is 0, insecure HTTP/1.1 server will run.
-  // If USE_SSL is 1, secure SLL HTTP/2 (Google's SPDY actually) server will
-  // run.
-  let server = null
-  if(config.USE_SSL) {
-    let serverOptions = {
-      key: fs.readFileSync(config.SSL_KEY, { encoding: 'utf-8' }),
-      cert: fs.readFileSync(config.SSL_CERT, { encoding: 'utf-8' }),
-      passphrase: config.SSL_PASSPHRASE,
-    }
-
-    // If certificate authority chain file is provided, use it
-    if(config.SSL_CA) {
-      serverOptions = {
-        ca: fs.readFileSync(config.SSL_CA, { encoding: 'utf-8' }),
+        this._server = spdy.createServer(serverOptions, this._app)
+      }
+      else /*(!config.USE_SSL)*/ {
+        this._server = http.createServer(this._app)
       }
     }
 
-    server = spdy.createServer(serverOptions, app)
-  }
-  else /*(!config.USE_SSL)*/ {
-    server = http.createServer(app)
+    server = () => {
+      return this._server
+    }
+
+    router = () => {
+      return this._app
+    }
+
+    listen = () => {
+      return new Promise((resolve, reject) => {
+        this._server.listen(config.HTTP_PORT, (err) => {
+          if(err) {
+            reject(err)
+          }
+          resolve(`Listening on ${config.PROTOCOL}${config.HTTP_HOST}:${config.HTTP_PORT}`)
+        })
+      })
+    }
   }
 
-  return server
+  return new HttpServer
 }
 
 export default createHttpServer

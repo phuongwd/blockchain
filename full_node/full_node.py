@@ -160,6 +160,20 @@ class FullNode(blockchain_rpc.BlockchainNode):
             Timer(self._config.transaction_sharing_interval,
                   function=self.share_transactions).start()
 
+    def discover_blocks(self):
+        if self._config.block_discovery_interval >= 0:
+            known_peers = set(self._known_peers)
+            for peer in known_peers:
+                blocks = peer.get_blocks()
+                for block in blocks:
+                    self._blockchain.put(block)
+            self.schedule_block_discovery()
+
+    def schedule_block_discovery(self):
+        if self._config.block_discovery_interval > 0:
+            Timer(self._config.block_discovery_interval,
+                  function=self.discover_blocks).start()
+
     def share_blocks(self):
         if self._config.block_sharing_interval >= 0:
             known_peers = set(self._known_peers)
