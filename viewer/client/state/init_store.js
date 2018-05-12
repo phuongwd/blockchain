@@ -6,7 +6,7 @@ import { composeWithDevTools } from 'redux-devtools-extension'
 import config from '../client.config'
 
 import reducer from './reducer'
-import { websocketSagas, normalSagas } from './sagas'
+import { clientSagas, serverSagas } from './sagas'
 
 const sagaMiddleware = createSagaMiddleware()
 const websocketMiddleware = createSagaMiddleware()
@@ -28,13 +28,12 @@ const initStore = (state, { isServer }) => {
 
   if(isServer) {
     store.runSagaTask = () => {
-      store.sagaTask = sagaMiddleware.run(normalSagas)
+      store.sagaTask = sagaMiddleware.run(serverSagas)
     }
   }
   else {
     store.runSagaTask = () => {
-      store.sagaTask = sagaMiddleware.run(normalSagas)
-      websocketMiddleware.run(websocketSagas)
+      store.sagaTask = sagaMiddleware.run(clientSagas)
     }
   }
 

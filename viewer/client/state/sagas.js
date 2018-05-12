@@ -3,7 +3,7 @@ import _ from 'lodash'
 import WebSocket from 'isomorphic-ws'
 
 import { eventChannel } from 'redux-saga'
-import { all, call, put, take, takeLatest } from 'redux-saga/effects'
+import { all, call, cancelled, put, take, takeLatest } from 'redux-saga/effects'
 
 import Actions from './actions'
 import Api from './api'
@@ -11,44 +11,52 @@ import Api from './api'
 import { api } from '../lib/redux_saga_utils'
 import config from '../client.config'
 
+
+const ws = new WebSocket(config.WEBSOCKET_URL, config.WEBSOCKET_PROTOCOL)
+
 function* refresh() {
   console.info('SAGA: refresh')
   yield api(Actions.REFRESH_SUCCEEDED, Api.refresh)
 }
 
-
 const createChannel = () => {
-  return new eventChannel(emit => {
-    const ws = new WebSocket(config.WEBSOCKET_URL, config.WEBSOCKET_PROTOCOL)
+  return eventChannel(emit => {
 
     ws.onmessage = (message) => {
       return emit(JSON.parse(message.data))
     }
 
-    return ws.close
+    return ws.disconnect
   })
 }
 
 function* listenWebsockets() {
   const channel = yield call(createChannel)
 
-  while(true) {
-    const action = yield take(channel)
-    yield put(action)
+  try {
+    while(true) {
+      const action = yield take(channel)
+      yield put(action)
+    }
+  } finally {
+    if(yield cancelled()) {
+      channel.close()
+    }
   }
 }
 
 
-function* websocketSagas() {
+function* clientSagas() {
   yield all([
     call(listenWebsockets),
+    takeLatest(Actions.REFRESH_REQUESTED, refresh),
   ])
 }
 
-function* normalSagas() {
+function* serverSagas() {
   yield all([
     takeLatest(Actions.REFRESH_REQUESTED, refresh),
   ])
 }
 
-export { websocketSagas, normalSagas }
+export { clientSagas, serverSagas }

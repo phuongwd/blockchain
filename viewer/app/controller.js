@@ -35,17 +35,26 @@ class BlockchainController {
   }
 
   addPeers = (peers) => {
+    const oldLen = this._peers.length
     this._peers = merge(this._peers, peers)
+    const newLen = this._peers.length
+    console.log('addPeers       : ', oldLen, ' -> ', newLen)
     this._broadcastThrottled(Actions.nodes(peers))
   }
 
   addBlocks = (blocks) => {
+    const oldLen = this._blocks.length
     this._blocks = merge(this._blocks, blocks)
+    const newLen = this._blocks.length
+    console.log('addBlocks      : ', oldLen, ' -> ', newLen)
     this._broadcastThrottled(Actions.blocks(blocks))
   }
 
   addTransactions = (transactions) => {
+    const oldLen = this._transactions.length
     this._transactions = merge(this._transactions, transactions)
+    const newLen = this._transactions.length
+    console.log('addTransactions: ', oldLen, ' -> ', newLen)
     this._broadcastThrottled(Actions.transactions(transactions))
   }
 }
