@@ -7,6 +7,7 @@ import config from '../client.config'
 
 import reducer from './reducer'
 import { clientSagas, serverSagas } from './sagas'
+import Actions from './actions'
 
 const sagaMiddleware = createSagaMiddleware()
 const middleware = [sagaMiddleware, thunk]

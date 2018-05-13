@@ -6,13 +6,15 @@ import TableOfNodes from '../components/TableOfNodes'
 
 const NodesPage = ({ nodes }) => {
   return (
-    <>
-      <h1>
-        Nodes
-      </h1>
+    <div className='container'>
+      <div className='row'>
+        <h1 className='col text-center'>
+          Transactions
+        </h1>
+      </div>
 
       <TableOfNodes nodes={nodes}/>
-    </>
+    </div>
   )
 }
 

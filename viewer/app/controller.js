@@ -56,40 +56,45 @@ class BlockchainController {
   }
 
   addBlocks = (blocks) => {
-    blocks = blocks.map((block) => {
-      const hash = block.hash.toString('hex')
-      const hash_prev = block.hash_prev.toString('hex')
-      const merkle_root = block.merkle_root.toString('hex')
+    blocks = blocks.map(this._convertBlock)
 
-      return {
-        ...block,
-        hash,
-        hash_prev,
-        merkle_root,
-      }
-    })
-
-    const oldLen = this._blocks.length
+    // const oldLen = this._blocks.length
     this._blocks = mergeBlocks(this._blocks, blocks)
-    const newLen = this._blocks.length
-    console.log('addBlocks      : ', oldLen, ' -> ', newLen)
+    // const newLen = this._blocks.length
+    // console.log('addBlocks      : ', oldLen, ' -> ', newLen)
     // this._broadcastThrottled(Actions.blocks(blocks))
   }
 
+  _convertBlock = (block) => {
+    const hash = block.hash.toString('hex')
+    const hash_prev = block.hash_prev.toString('hex')
+    const merkle_root = block.merkle_root.toString('hex')
+    const transactions = block.transactions.map(this._convertTransaction)
+
+    return {
+      ...block,
+      hash,
+      hash_prev,
+      merkle_root,
+      transactions,
+    }
+  }
+
+  _convertTransaction = (transaction) => {
+    const hash = transaction.hash.toString('hex')
+
+    return {
+      ...transaction,
+      hash,
+    }
+  }
+
   addTransactions = (transactions) => {
-    transactions = transactions.map((transaction) => {
-      const hash = transaction.hash.toString('hex')
-
-      return {
-        ...transaction,
-        hash,
-      }
-    })
-
-    const oldLen = this._transactions.length
+    transactions = transactions.map(this._convertTransaction)
+    // const oldLen = this._transactions.length
     this._transactions = mergeTransactions(this._transactions, transactions)
-    const newLen = this._transactions.length
-    console.log('addTransactions: ', oldLen, ' -> ', newLen)
+    // const newLen = this._transactions.length
+    // console.log('addTransactions: ', oldLen, ' -> ', newLen)
     // this._broadcastThrottled(Actions.transactions(transactions))
   }
 }

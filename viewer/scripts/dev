@@ -38,4 +38,5 @@ nodemon \
 --watch client/error.js \
 --watch common/ \
 --exec \
-babel-node --trace-warnings app/main.js
+babel-node app/main.js
+#--trace-warnings

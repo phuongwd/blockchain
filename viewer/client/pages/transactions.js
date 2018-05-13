@@ -1,18 +1,27 @@
 import React from 'react'
 import pageMiddleware from '../lib/page_middleware'
 
-import TableOfTransactions from '../components/TableOfTransactions'
+import Transaction from '../components/Transaction'
 
 
 const TransactionsPage = ({ transactions }) => {
   return (
-    <>
-      <h1>
-        Transactions
-      </h1>
+    <div className='container'>
+      <div className='row'>
+        <h1 className='col text-center'>
+          Transactions
+        </h1>
+      </div>
 
-      <TableOfTransactions transactions={transactions}/>
-    </>
+      {
+        transactions.map((transaction, i) => (
+          <div key={i} className='row'>
+            <Transaction transaction={transaction}/>
+          </div>
+        ))
+      }
+
+    </div>
   )
 }
 

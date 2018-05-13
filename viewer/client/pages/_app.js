@@ -11,6 +11,7 @@ import Content from '../components/Content'
 import Navigation from '../components/Navigation'
 
 import '../styles/layout.scss'
+import '../../node_modules/bootstrap/scss/bootstrap.scss'
 
 class MyApp extends App {
   static async getInitialProps({ Component, ctx }) {
@@ -29,11 +30,11 @@ class MyApp extends App {
       <Container>
         <Provider store={store}>
           <>
-            <nav className={'nav'}>
+            <nav className={'container-fluid container-nav'}>
               <Navigation/>
             </nav>
 
-            <section className={'content'}>
+            <section className={'container container-content'}>
               <Content
                 Component={Component}
                 pageProps={pageProps}

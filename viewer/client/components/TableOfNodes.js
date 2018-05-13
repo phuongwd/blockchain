@@ -1,40 +1,29 @@
 import React from 'react'
-
-import {
-  Paper,
-  Table,
-  TableBody,
-  TableRow,
-  TableCell,
-  TableHead,
-} from 'material-ui'
+import { Table } from 'reactstrap'
 
 
 const TableOfNodes = ({ nodes }) => {
   return (
-    <Paper className={''}>
-      <Table className={''}>
-        <TableHead>
-          <TableRow>
-            <TableCell>Hostname</TableCell>
-            <TableCell numeric>Port</TableCell>
-            <TableCell numeric>Address</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {
-            nodes.map((node, i) => {
-              return (
-                <TableRow key={i}>
-                  <TableCell>{node.host}</TableCell>
-                  <TableCell numeric>{node.port}</TableCell>
-                  <TableCell numeric>{node.address.slice(0, 7)}</TableCell>
-                </TableRow>
-              )
-            })}
-        </TableBody>
-      </Table>
-    </Paper>
+    <Table hover striped bordered size="sm">
+      <thead>
+        <tr>
+          <th className={'table-cell-key'}>{'Hostname'}</th>
+          <th className={'table-cell-value'}>{'Port'}</th>
+          <th className={'table-cell-value'}>{'Address'}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {
+          nodes.map((node, i) => (
+            <tr key={i}>
+              <td className={'table-cell-key'}>{node.host}</td>
+              <td className={'table-cell-value'}>{node.port}</td>
+              <td className={'table-cell-value'}>{node.address.slice(0, 7)}</td>
+            </tr>
+          ))
+        }
+      </tbody>
+    </Table>
   )
 }
 
