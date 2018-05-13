@@ -1,7 +1,4 @@
 const path = require('path')
-const utils = require('util')
-
-import _ from 'lodash'
 
 const CopyWebpackPlugin = require('copy-webpack-plugin')
 const withSass = require('@zeit/next-sass')
