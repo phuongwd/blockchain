@@ -9,6 +9,7 @@ export CURR_DIR=$(cd $(dirname "${BASH_SOURCE[0]}"); pwd)
 source "${CURR_DIR}/prepare_env"
 
 INSTALLER_FILENAME="Miniconda3-latest-Linux-x86_64.sh"
+#INSTALLER_FILENAME="Miniconda3-latest-MacOSX-x86_64.sh" # For MacOS
 URL="https://repo.continuum.io/miniconda/${INSTALLER_FILENAME}"
 
 # If there is no Python directory
