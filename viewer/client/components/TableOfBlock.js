@@ -12,8 +12,8 @@ import {
 
 const TableOfBlock = ({ block }) => {
   return (
-    <Paper className={''}>
-      <Table className={''}>
+    <Paper>
+      <Table>
         <TableHead>
           <TableRow>
             <TableCell>Data</TableCell>
@@ -22,12 +22,28 @@ const TableOfBlock = ({ block }) => {
         </TableHead>
         <TableBody>
           <TableRow>
-            <TableCell numeric>{'Version'}</TableCell>
-            <TableCell numeric>{block.version}</TableCell>
+            <TableCell>{'Hash'}</TableCell>
+            <TableCell className={'mono'}>{block.hash.slice(0, 7)}</TableCell>
           </TableRow>
           <TableRow>
-            <TableCell numeric>{'Num transactions'}</TableCell>
-            <TableCell numeric>{block.transactions.length}</TableCell>
+            <TableCell>{'Hash prev.'}</TableCell>
+            <TableCell className={'mono'}>{block.hash_prev.slice(0, 7)}</TableCell>
+          </TableRow>
+          <TableRow>
+            <TableCell>{'Num transactions'}</TableCell>
+            <TableCell>{block.transactions.length}</TableCell>
+          </TableRow>
+          <TableRow>
+            <TableCell>{'Difficulty'}</TableCell>
+            <TableCell>{block.difficulty}</TableCell>
+          </TableRow>
+          <TableRow>
+            <TableCell>{'Nonce'}</TableCell>
+            <TableCell>{block.nonce}</TableCell>
+          </TableRow>
+          <TableRow>
+            <TableCell>{'Merkkle root'}</TableCell>
+            <TableCell className={'mono'}>{block.merkle_root.slice(0, 7)}</TableCell>
           </TableRow>
         </TableBody>
       </Table>

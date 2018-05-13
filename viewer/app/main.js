@@ -39,8 +39,8 @@ nextjs_app.prepare()
     const controller = new BlockchainController()
 
     const httpServer = createHttpServer(config)
-    const webSocketServer = createWebsocketServer(httpServer.server(), config)
-    controller.setWebsocketServer(webSocketServer)
+    // const webSocketServer = createWebsocketServer(httpServer.server(), config)
+    // controller.setWebsocketServer(webSocketServer)
 
     const rpcServer = new BlockchainRpcServer({
       controller,

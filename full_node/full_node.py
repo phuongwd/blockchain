@@ -42,19 +42,27 @@ class FullNode(blockchain_rpc.BlockchainNode):
         self._transaction_queue = PriorityQueue(f_priority=favor_higher_fees)
         self._block_queue = Queue()
 
+        self._mining = True
+
         # Launch mining thread (consumes transactions, produces blocks)
-        Thread(target=self.mine).start()
+        Thread(target=self.mine, name="mine").start()
 
         # Launch transaction generating thread (produces transactions)
-        Thread(target=self.generate_transactions).start()
+        Thread(target=self.generate_transactions,
+               name="generate_transactions").start()
 
-        # Launch transaction discovery service
-        self.schedule_transaction_discovery()
+        # Launch discovery/sharing services
+        Thread(target=self.discover_blocks,
+               name="discover_blocks").start()
 
-        # Launch transaction sharing service
-        self.schedule_transaction_sharing()
+        Thread(target=self.share_blocks,
+               name="share_blocks").start()
 
-        self.schedule_block_sharing()
+        Thread(target=self.discover_transactions,
+               name="discover_transactions").start()
+
+        Thread(target=self.share_transactions,
+               name="share_transactions").start()
 
     def generate_transactions(self):
         transaction_generator = FakeTransactionGenerator()
@@ -63,9 +71,11 @@ class FullNode(blockchain_rpc.BlockchainNode):
             transaction = transaction_generator.generate()
             self._transaction_queue.put(transaction)
 
-        while True:
-            transaction = transaction_generator.generate()
-            self._transaction_queue.put(transaction)
+        while self._mining:
+            print('N transactions: ', len(self._transaction_queue.items))
+            if len(self._transaction_queue.items) < 15:
+                transaction = transaction_generator.generate()
+                self._transaction_queue.put(transaction)
             time.sleep(3)
 
     def create_coinbase_transaction(self):
@@ -86,7 +96,8 @@ class FullNode(blockchain_rpc.BlockchainNode):
         Mines new blocks
         """
 
-        while True:
+        i = 0
+        while self._mining:
             coinbase_transaction = self.create_coinbase_transaction()
             transactions = [coinbase_transaction]
 
@@ -109,9 +120,14 @@ class FullNode(blockchain_rpc.BlockchainNode):
             found = False
             while not found:
                 found = self.mine_one_iteration(block)
-
                 # Throttle mining to reduce CPU load (for the demo)
                 time.sleep(self._mining_throttle_ms / 1000)
+
+            i += 1
+
+            if i > 3:
+                self._mining = False
+                print("Not mining")
 
     def mine_one_iteration(self, block: blockchain.Block):
         """
@@ -135,57 +151,41 @@ class FullNode(blockchain_rpc.BlockchainNode):
 
     def discover_transactions(self):
         if self._config.transaction_discovery_interval >= 0:
-            known_peers = set(self._known_peers)
-            for peer in known_peers:
-                transactions = peer.get_transactions()
-                for transaction in transactions:
-                    self._transaction_queue.put(transaction)
-            self.schedule_transaction_discovery()
-
-    def schedule_transaction_discovery(self):
-        if self._config.transaction_discovery_interval > 0:
-            Timer(self._config.transaction_discovery_interval,
-                  function=self.discover_transactions).start()
+            while True:
+                known_peers = set(self._known_peers)
+                for peer in known_peers:
+                    transactions = peer.get_transactions()
+                    for transaction in transactions:
+                        self._transaction_queue.put(transaction)
+                time.sleep(self._config.transaction_discovery_interval)
 
     def share_transactions(self):
         if self._config.transaction_sharing_interval >= 0:
-            known_peers = set(self._known_peers)
-            transactions = self._transaction_queue.items
-            for peer in known_peers:
-                peer.send_transactions(transactions)
-            self.schedule_transaction_sharing()
-
-    def schedule_transaction_sharing(self):
-        if self._config.transaction_sharing_interval > 0:
-            Timer(self._config.transaction_sharing_interval,
-                  function=self.share_transactions).start()
+            while True:
+                known_peers = set(self._known_peers)
+                transactions = self._transaction_queue.items
+                for peer in known_peers:
+                    peer.send_transactions(transactions)
+                time.sleep(self._config.transaction_sharing_interval)
 
     def discover_blocks(self):
         if self._config.block_discovery_interval >= 0:
-            known_peers = set(self._known_peers)
-            for peer in known_peers:
-                blocks = peer.get_blocks()
-                for block in blocks:
-                    self._blockchain.put(block)
-            self.schedule_block_discovery()
-
-    def schedule_block_discovery(self):
-        if self._config.block_discovery_interval > 0:
-            Timer(self._config.block_discovery_interval,
-                  function=self.discover_blocks).start()
+            while True:
+                known_peers = set(self._known_peers)
+                for peer in known_peers:
+                    blocks = peer.get_blocks()
+                    for block in blocks:
+                        self._blockchain.add(block)
+                time.sleep(self._config.block_discovery_interval)
 
     def share_blocks(self):
         if self._config.block_sharing_interval >= 0:
-            known_peers = set(self._known_peers)
-            blocks = list(self._blockchain)
-            for peer in known_peers:
-                peer.send_blocks(blocks)
-            self.schedule_block_sharing()
-
-    def schedule_block_sharing(self):
-        if self._config.block_sharing_interval > 0:
-            Timer(self._config.block_sharing_interval,
-                  function=self.share_blocks).start()
+            while True:
+                known_peers = set(self._known_peers)
+                blocks = list(self._blockchain)
+                for peer in known_peers:
+                    peer.send_blocks(blocks)
+                time.sleep(self._config.block_sharing_interval)
 
     def get_transactions(self, _, __):
         """

@@ -32,3 +32,7 @@ $font-family-base: $font-family-default;
   z-index: 1;
   transition: opacity 250ms ease-in;
 }
+
+.mono {
+  font-family: $font-family-monospace;
+}

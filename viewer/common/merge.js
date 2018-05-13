@@ -1,13 +1,12 @@
 import _ from 'lodash'
 
-function merge(oldData, newData, orderBy = null) {
-  let mergedData = [...oldData, ...newData]
+function merge(oldData, newData, { unionBy = null, orderBy = null }) {
+  let mergedData = _.unionBy(oldData, newData, unionBy)
 
   if(orderBy) {
     mergedData = _.orderBy(mergedData, orderBy)
   }
 
-  mergedData = _.uniqWith(mergedData, _.isEqual)
   return mergedData
 }
 

@@ -12,21 +12,33 @@ const createWebsocketsServer = (server, config) => {
       return
     }
 
-    wss.clients.forEach(function each(client) {
+    // const oldLength = wss.clients.size
+
+    let clients = Array.from(wss.clients)
+
+    // clients = _.filter(clients, client => {
+    //   console.log(client.ip, client.isClosed)
+    //   return !client.isClosed
+    // })
+    // clients = _.uniqBy(clients, 'ip')
+    //
+    // console.log('wss.clients.length: ', oldLength, ' -> ', clients.length)
+
+    _.forEach(clients, client => {
       if(client.readyState === WebSocket.OPEN) {
         client.send(JSON.stringify(action))
       }
     })
   }
 
-  wss.on('connection', (ws, req) => {
+  wss.on('connection', (client, req) => {
     const ip = req.connection.remoteAddress
-    console.info(`${datetime()} Peer ${ip} connected.`)
-  })
+    console.info(`${datetime()} wesocket connection: ${ip}`)
+    // client.isClosed = false
+    client.ip = ip
 
-  wss.on('close', (ws, req) => {
-    const ip = req.connection.remoteAddress
-    console.info(`${datetime()} Peer ${ip} disconnected.`)
+    // client.on('error', () => { client.isClosed = true })
+    // client.on('close', () => { client.isClosed = true })
   })
   return wss
 }

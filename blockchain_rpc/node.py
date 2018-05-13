@@ -6,7 +6,8 @@ from __future__ import (
 )
 
 import threading
-from threading import Lock
+import time
+from threading import Lock, Thread
 from concurrent import futures
 from queue import Queue
 from typing import Iterable
@@ -44,8 +45,12 @@ class BlockchainNode(service.Servicer):
         for peer in config.known_peers:
             self.maybe_add_peer(peer)
 
-        self.schedule_peer_discovery()
-        self.schedule_peer_sharing()
+        # Launch discovery/sharing services
+        Thread(target=self.discover_peers,
+               name="discover_peers").start()
+
+        Thread(target=self.share_peers,
+               name="share_peers").start()
 
     def start(self):
         """
@@ -135,25 +140,16 @@ class BlockchainNode(service.Servicer):
         """
 
         if self._config.peer_discovery_interval >= 0:
-            console.debug("> discovering peers")
+            while True:
+                console.debug("> discovering peers")
 
-            with self._known_peers_lock:
-                known_peers = set(self._known_peers)
+                with self._known_peers_lock:
+                    known_peers = set(self._known_peers)
 
-            for peer in known_peers:
-                self.recv_peers_from(peer)
+                for peer in known_peers:
+                    self.recv_peers_from(peer)
 
-            self.schedule_peer_discovery()
-
-    def schedule_peer_discovery(self):
-        """
-        Schedules peer discovery on a separate thread
-        """
-        if self._config.peer_discovery_interval > 0:
-            threading.Timer(
-                self._config.peer_discovery_interval,
-                function=self.discover_peers
-            ).start()
+                time.sleep(self._config.peer_discovery_interval)
 
     def share_peers(self):
         """
@@ -162,25 +158,16 @@ class BlockchainNode(service.Servicer):
         """
 
         if self._config.peer_sharing_interval >= 0:
-            console.debug("> sharing peers")
+            while True:
+                console.debug("> sharing peers")
 
-            with self._known_peers_lock:
-                known_peers = set(self._known_peers)
+                with self._known_peers_lock:
+                    known_peers = set(self._known_peers)
 
-            for peer in known_peers:
-                self.send_peers_to(peer)
+                for peer in known_peers:
+                    self.send_peers_to(peer)
 
-            self.schedule_peer_sharing()
-
-    def schedule_peer_sharing(self):
-        """
-        Schedules peer sharing on a separate thread
-        """
-        if self._config.peer_sharing_interval > 0:
-            threading.Timer(
-                self._config.peer_sharing_interval,
-                function=self.share_peers
-            ).start()
+                time.sleep(self._config.peer_sharing_interval)
 
     def is_known_peer(self, peer: blockchain_rpc.Peer) -> bool:
         """

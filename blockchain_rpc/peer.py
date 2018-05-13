@@ -15,6 +15,8 @@ from utils import random_string, console
 
 service = blockchain_rpc.Service()
 
+GRPC_CALL_TIMEOUT = 3
+
 
 class Peer:
     def __init__(self, host, port):
@@ -108,7 +110,14 @@ class Peer:
             return []
 
         console.debug("< get_peers from {:}".format(self))
-        peers = list(self._stub.get_peers(service.messages.Empty()))
+
+        try:
+            peers = list(
+                self._stub.get_peers(service.messages.Empty(),
+                                     timeout=GRPC_CALL_TIMEOUT))
+        except:
+            return []
+
         return [Peer.from_proto(peer) for peer in peers]
 
     def send_peers(self, peers: Iterable['Peer']):
@@ -121,7 +130,13 @@ class Peer:
             return False
 
         console.debug("> send_peers to {:}".format(self))
-        self._stub.send_peers(iter([peer.to_proto() for peer in peers]))
+
+        try:
+            self._stub.send_peers(iter([peer.to_proto() for peer in peers]),
+                                  timeout=GRPC_CALL_TIMEOUT)
+        except:
+            return False
+
         return True
 
     def get_transactions(self):
@@ -130,8 +145,14 @@ class Peer:
             return []
 
         console.debug("< get_transactions from {:}".format(self))
-        transactions = list(
-            self._stub.get_transactions(service.messages.Empty()))
+
+        try:
+            transactions = list(
+                self._stub.get_transactions(service.messages.Empty(),
+                                            timeout=GRPC_CALL_TIMEOUT))
+        except:
+            return []
+
         return [blockchain.Transaction.from_proto(tx) for tx in transactions]
 
     def send_transactions(self, transactions):
@@ -141,7 +162,13 @@ class Peer:
 
         console.debug("> send_transactions to {:}".format(self))
         transactions = [transaction.to_proto() for transaction in transactions]
-        self._stub.send_transactions(iter(transactions))
+
+        try:
+            self._stub.send_transactions(iter(transactions),
+                                         timeout=GRPC_CALL_TIMEOUT)
+        except:
+            return False
+
         return True
 
     def get_blocks(self):
@@ -150,7 +177,13 @@ class Peer:
             return []
 
         console.debug("> get_blocks from {:}".format(self))
-        blocks = list(self._stub.get_blocks(service.messages.Empty()))
+
+        try:
+            blocks = list(self._stub.get_blocks(service.messages.Empty(),
+                                                timeout=GRPC_CALL_TIMEOUT))
+        except:
+            return []
+
         return [blockchain.Block.from_proto(blocks) for blocks in blocks]
 
     def send_blocks(self, blocks):
@@ -160,5 +193,11 @@ class Peer:
 
         console.debug("> send_blocks to {:}".format(self))
         blocks = [block.to_proto() for block in blocks]
-        self._stub.send_blocks(iter(blocks))
+
+        try:
+            self._stub.send_blocks(iter(blocks),
+                                   timeout=GRPC_CALL_TIMEOUT)
+        except:
+            return False
+
         return True

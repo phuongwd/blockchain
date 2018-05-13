@@ -6,7 +6,7 @@ from __future__ import (
 )
 
 from functools import reduce
-from typing import List, Callable, Any
+from typing import List
 
 import blockchain
 from blockchain_rpc import Service
@@ -71,6 +71,7 @@ class Transaction:
 
         return service.messages.Transaction(
             version=1,
+            hash=self._hash,
             extra_nonce=self._extra_nonce,
             inputs=inputs,
             outputs=outputs

@@ -9,8 +9,7 @@ import reducer from './reducer'
 import { clientSagas, serverSagas } from './sagas'
 
 const sagaMiddleware = createSagaMiddleware()
-const websocketMiddleware = createSagaMiddleware()
-const middleware = [sagaMiddleware, thunk, websocketMiddleware]
+const middleware = [sagaMiddleware, thunk]
 
 if(!config.IS_PRODUCTION) {
   middleware.push(require('redux-immutable-state-invariant').default())

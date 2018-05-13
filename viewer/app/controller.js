@@ -1,7 +1,11 @@
 import _ from 'lodash'
 
 import Actions from '../client/state/actions'
-import merge from '../common/merge'
+
+import mergeTransactions from '../common/merge_transactions'
+import mergeBlocks from '../common/merge_blocks'
+import mergePeers from '../common/merge_peers'
+
 
 class BlockchainController {
   constructor() {
@@ -14,7 +18,7 @@ class BlockchainController {
 
   setRpcClient = (rpcClient) => { this._rpcClient = rpcClient }
 
-  setWebsocketServer = (wss) => { this._wss = wss }
+  // setWebsocketServer = (wss) => { this._wss = wss }
 
   all = () => {
     return {
@@ -30,32 +34,54 @@ class BlockchainController {
 
   transactions = () => this._transactions
 
-  _broadcastThrottled = (data) => {
-    _.throttle(() => this._wss.broadcast(data), 1000)()
-  }
+  // _broadcastThrottled = (data) => {
+  //   _.throttle(() => this._wss.broadcast(data), 1000)()
+  // }
 
   addPeers = (peers) => {
-    const oldLen = this._peers.length
-    this._peers = merge(this._peers, peers)
-    const newLen = this._peers.length
-    console.log('addPeers       : ', oldLen, ' -> ', newLen)
-    this._broadcastThrottled(Actions.nodes(peers))
+    // const oldLen = this._peers.length
+    this._peers = mergePeers(this._peers, peers)
+    // const newLen = this._peers.length
+    // console.log('addPeers       : ', oldLen, ' -> ', newLen)
+    // this._broadcastThrottled(Actions.nodes(peers))
   }
 
   addBlocks = (blocks) => {
+    blocks = blocks.map((block) => {
+      const hash = block.hash.toString('hex')
+      const hash_prev = block.hash_prev.toString('hex')
+      const merkle_root = block.merkle_root.toString('hex')
+
+      return {
+        ...block,
+        hash,
+        hash_prev,
+        merkle_root,
+      }
+    })
+
     const oldLen = this._blocks.length
-    this._blocks = merge(this._blocks, blocks)
+    this._blocks = mergeBlocks(this._blocks, blocks)
     const newLen = this._blocks.length
     console.log('addBlocks      : ', oldLen, ' -> ', newLen)
-    this._broadcastThrottled(Actions.blocks(blocks))
+    // this._broadcastThrottled(Actions.blocks(blocks))
   }
 
   addTransactions = (transactions) => {
+    transactions = transactions.map((transaction) => {
+      const hash = transaction.hash.toString('hex')
+
+      return {
+        ...transaction,
+        hash,
+      }
+    })
+
     const oldLen = this._transactions.length
-    this._transactions = merge(this._transactions, transactions)
+    this._transactions = mergeTransactions(this._transactions, transactions)
     const newLen = this._transactions.length
     console.log('addTransactions: ', oldLen, ' -> ', newLen)
-    this._broadcastThrottled(Actions.transactions(transactions))
+    // this._broadcastThrottled(Actions.transactions(transactions))
   }
 }
 
