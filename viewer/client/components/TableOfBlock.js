@@ -42,7 +42,7 @@ const TableOfBlock = ({ block }) => {
             <TableCell>{block.nonce}</TableCell>
           </TableRow>
           <TableRow>
-            <TableCell>{'Merkkle root'}</TableCell>
+            <TableCell>{'Merkle root'}</TableCell>
             <TableCell className={'mono'}>{block.merkle_root.slice(0, 7)}</TableCell>
           </TableRow>
         </TableBody>
