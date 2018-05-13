@@ -39,6 +39,15 @@ class BlockchainController {
   // }
 
   addPeers = (peers) => {
+    peers = peers.map((peer) => {
+      const address = peer.address.toString('hex')
+
+      return {
+        ...peer,
+        address,
+      }
+    })
+
     // const oldLen = this._peers.length
     this._peers = mergePeers(this._peers, peers)
     // const newLen = this._peers.length

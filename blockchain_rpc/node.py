@@ -5,17 +5,20 @@ from __future__ import (
     absolute_import, division, print_function, unicode_literals
 )
 
-import threading
+import hashlib
+import os
 import time
 from threading import Lock, Thread
 from concurrent import futures
 from queue import Queue
 from typing import Iterable
 
+import base58
+import ecdsa
 import grpc
 
 import blockchain_rpc
-from utils import wait_forever, console
+from utils import wait_forever, console, ensure_dir
 
 service = blockchain_rpc.Service()
 
@@ -35,9 +38,10 @@ class BlockchainNode(service.Servicer):
         self._server.add_insecure_port(
             "{:}:{:}".format(config.host, config.port))
 
-        self._address = 0
-        self._this_node = blockchain_rpc.Peer(host=config.host,
-                                              port=config.port)
+        self.create_keys_and_address()
+
+        self._this_node = blockchain_rpc.Peer(
+            host=config.host, port=config.port, address=self._address)
 
         self._known_peers = set()
         self._known_peers_lock = Lock()
@@ -46,11 +50,32 @@ class BlockchainNode(service.Servicer):
             self.maybe_add_peer(peer)
 
         # Launch discovery/sharing services
-        Thread(target=self.discover_peers,
-               name="discover_peers").start()
+        Thread(target=self.discover_peers, name="discover_peers").start()
+        Thread(target=self.share_peers, name="share_peers").start()
 
-        Thread(target=self.share_peers,
-               name="share_peers").start()
+    def create_keys_and_address(self):
+        key_path = self._config.key_path
+        ensure_dir(os.path.dirname(key_path))
+
+        # Generate or read the private key
+        if os.path.exists(key_path):
+            with open(key_path, 'rb') as f:
+                self._private_key = ecdsa.SigningKey.from_string(
+                    f.read(), curve=ecdsa.SECP256k1
+                )
+        else:
+            self._private_key = ecdsa.SigningKey.generate(curve=ecdsa.SECP256k1)
+            with open(key_path, 'wb') as f:
+                f.write(self._private_key.to_string())
+
+        # Retrieve public key
+        self._public_key = self._private_key.get_verifying_key()
+
+        # Generate address from public key
+        addr = hashlib.new('sha256', self._public_key.to_string()).digest()
+        addr = hashlib.new('ripemd160', addr).digest()
+        addr = base58.b58encode_check(bytes(addr))
+        self._address = addr
 
     def start(self):
         """
@@ -94,6 +119,7 @@ class BlockchainNode(service.Servicer):
         the list of currently known peers.
         """
         peers = list(self._known_peers)
+        peers = list(filter(lambda p: p.is_connected, peers))
         if include_self:
             peers.append(self._this_node)
         return peer.send_peers(peers)
@@ -110,7 +136,7 @@ class BlockchainNode(service.Servicer):
         if not is_connected:
             return False
 
-        console.debug("> get_peers from {:}".format(peer))
+        console.debug("> recv_peers from {:}".format(peer))
 
         # Receve the initial list
         rcvd_peers = peer.get_peers()
@@ -165,7 +191,9 @@ class BlockchainNode(service.Servicer):
                     known_peers = set(self._known_peers)
 
                 for peer in known_peers:
-                    self.send_peers_to(peer)
+                    is_connected = peer.connect()
+                    if is_connected:
+                        self.send_peers_to(peer)
 
                 time.sleep(self._config.peer_sharing_interval)
 
@@ -179,13 +207,13 @@ class BlockchainNode(service.Servicer):
 
         return (peer == self._this_node) or is_known
 
-    def ping(self, ping, __):
+    def ping(self, _, __):
         """
         RPC server handler triggered on `ping` RPC call.
         Replies with a `pong` reply. Ping-pong protocol is used to verify
         connection state between nodes.
         """
-        return service.messages.Pong(message=ping.message)
+        return service.messages.Pong(node=self._this_node.to_proto())
 
     def get_peers(self, _, __):
         """
@@ -195,16 +223,18 @@ class BlockchainNode(service.Servicer):
         with self._known_peers_lock:
             known_peers = list(self._known_peers)
 
-        console.debug("< req: get_peers")
+        console.debug("> req: get_peers")
         for peer in known_peers:
-            console.debug("> sent peer: {:}".format(peer))
-            yield peer.to_proto()
+            is_connected = peer.connect()
+            if is_connected:
+                console.debug("> sent peer: {:}".format(peer))
+                yield peer.to_proto()
 
     def send_peers(self, peers, __):
         """
         Server handler that accepts peers on `send_peers` request.
         """
-        console.debug("< req: send_peers")
+        console.debug("> req: send_peers")
         for peer in peers:
             peer = blockchain_rpc.Peer.from_proto(peer)
             console.debug("> rcvd peer: {:}".format(peer))

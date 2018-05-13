@@ -28,7 +28,7 @@ const TableOfNodes = ({ nodes }) => {
                 <TableRow key={i}>
                   <TableCell>{node.host}</TableCell>
                   <TableCell numeric>{node.port}</TableCell>
-                  <TableCell numeric>{node.address}</TableCell>
+                  <TableCell numeric>{node.address.slice(0, 7)}</TableCell>
                 </TableRow>
               )
             })}

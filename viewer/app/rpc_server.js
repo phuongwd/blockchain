@@ -5,6 +5,15 @@ import grpc from 'grpc'
 
 class BlockchainRpcServer {
   constructor({ controller, proto_path, service_name, package_name, host, port }) {
+    this._host = host
+    this._port = port
+
+    // Hardcoded address
+    // (hardcoded address is fine as long as we run only one instance, 
+    // also this node does not generate any transactions, so we don't need
+    // to bother with keys and signatures)
+    this._address = Buffer.from('B4jFTP934QZFEQRsDdrYqfA2J7vZuP1h4')
+
     this._controller = controller
 
     const proto = grpc.load(proto_path)[package_name][service_name]
@@ -12,9 +21,9 @@ class BlockchainRpcServer {
 
     this._server.addService(proto.service, {
       ping: this.ping,
-      getPeers: this._getHandlerWrapper(this._controller.peers),
-      getTransactions: this._getHandlerWrapper(this._controller.transactions),
-      getBlocks: this._getHandlerWrapper(this._controller.blocks),
+      getPeers: this._getHandlerWrapper(() => []),
+      getTransactions: this._getHandlerWrapper(() => []),
+      getBlocks: this._getHandlerWrapper(() => []),
       sendPeers: this._sendHandlerWrapper(this._controller.addPeers),
       sendTransactions: this._sendHandlerWrapper(this._controller.addTransactions),
       sendBlocks: this._sendHandlerWrapper(this._controller.addBlocks),
@@ -27,8 +36,12 @@ class BlockchainRpcServer {
   }
 
   ping = (call, callback) => {
-    const message = _.get(call, 'request.message')
-    callback(null, { message })
+    const node = {
+      host: this._host,
+      port: this._port,
+      address: this._address,
+    }
+    callback(null, { node })
   }
 
   _getHandlerWrapper = (handler) => (

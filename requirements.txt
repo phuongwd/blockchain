@@ -1,5 +1,7 @@
+base58==1.0.0
 coverage==4.5.1
 docopt==0.6.2
+ecdsa==0.13
 grpcio-tools==1.11.0
 grpcio==1.11.0
 protobuf==3.5.2.post1

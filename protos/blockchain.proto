@@ -12,20 +12,18 @@ message Empty {
 
 
 // Outgoing `ping` message of a ping-pong protocol (see service definition)
-message Ping {
-    string message = 1;
-}
+message Ping {}
 
 // Incoming `pong` message of a ping-pong protocol (see service definition)
 message Pong {
-    string message = 1;
+    Node node = 1;
 }
 
 // Holds information about a single node (peer) in the network.
 message Node {
     string host = 1; // IP address of the node
     int32 port = 2; // Port on which the node is listening
-    int32 address = 3; // Coin address of the node
+    bytes address = 3; // Coin address of the node
 }
 
 // Represents an input of a transaction.
@@ -75,9 +73,9 @@ message Block {
 // Describes RPC calls of the blockchain service
 service Blockchain {
     // Ping-pong protocol for the connection verification.
-    // A node sends a simple random message to another node.
-    // That node is supposed to reply with the exact same message.
-    // This is a simple verification of the RPC connection status.
+    // A node sends an empty message to another node.
+    // That node is supposed to reply with its address.
+    // This is a simple verification of the RPC connectivity status.
     rpc ping (Ping) returns (Pong) {}
 
     // A node advertises to its peer nodes one or more of the new transactions

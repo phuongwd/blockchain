@@ -19,10 +19,10 @@ GRPC_CALL_TIMEOUT = 3
 
 
 class Peer:
-    def __init__(self, host, port):
+    def __init__(self, host, port, address=None):
         self._host = host
         self._port = int(port)
-        self._address = None
+        self._address = address
         self._channel = None
         self._stub = None
 
@@ -44,14 +44,14 @@ class Peer:
             return False
 
         try:
-            message = random_string(8)
-            res = self._stub.ping(service.messages.Ping(message=message))
-            if res is None or res.message != message:
-                return False
-        except:
+            peer = self._stub.ping(service.messages.Ping())
+        except Exception as e:
             self._channel = None
             self._stub = None
             return False
+
+        peer = Peer.from_proto(peer.node)
+        self._address = peer._address
 
         return True
 
@@ -81,7 +81,11 @@ class Peer:
 
     @staticmethod
     def from_proto(peer_proto):
-        return Peer(host=peer_proto.host, port=peer_proto.port)
+        return Peer(
+            host=peer_proto.host,
+            port=peer_proto.port,
+            address=peer_proto.address
+        )
 
     def to_proto(self):
         return service.messages.Node(

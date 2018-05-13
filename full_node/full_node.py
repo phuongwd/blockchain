@@ -72,7 +72,6 @@ class FullNode(blockchain_rpc.BlockchainNode):
             self._transaction_queue.put(transaction)
 
         while self._mining:
-            print('N transactions: ', len(self._transaction_queue.items))
             if len(self._transaction_queue.items) < 15:
                 transaction = transaction_generator.generate()
                 self._transaction_queue.put(transaction)

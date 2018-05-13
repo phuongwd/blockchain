@@ -8,6 +8,7 @@ __all__ = [
     "create_target",
     "console",
     "dict_to_namedtuple",
+    "ensure_dir",
     "int_to_bytes",
     "ListImmutable",
     "MockConvertibleToBytes",
@@ -24,6 +25,7 @@ from .bin_to_hex import bin_to_hex
 from .console import console, Verbosity
 from .create_target import create_target
 from .dict_to_namedtuple import dict_to_namedtuple
+from .ensure_dir import ensure_dir
 from .bytes_to_int import bytes_to_int
 from .int_to_bytes import int_to_bytes
 from .list_immutable import ListImmutable
