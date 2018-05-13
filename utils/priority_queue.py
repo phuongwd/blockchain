@@ -42,9 +42,8 @@ class PriorityQueue:
         self._q = BuiltinPriorityQueue()
         self._lock = Lock()
 
-        with self._lock:
-            for item in (items or []):
-                self.put(item)
+        for item in (items or []):
+            self.put(item)
 
     @property
     def items(self):
@@ -68,7 +67,7 @@ class PriorityQueue:
 
     def contains(self, item):
         items = self.items
-        return _PriorityQueueItem(item) in items
+        return item in items
 
     def is_empty(self):
         with self._lock:

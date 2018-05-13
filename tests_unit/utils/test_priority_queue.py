@@ -13,15 +13,15 @@ from utils import PriorityQueue
 class TestPriorityQueue(TestCase):
     def test_iteration_on_empty(self):
         q = PriorityQueue(items=[])
-        assert [] == [i for i in q]
+        assert [] == [i for i in q.items]
 
     def test_iteration_on_one(self):
         q = PriorityQueue(items=[3])
-        assert [3] == [i for i in q]
+        assert [3] == [i for i in q.items]
 
     def test_iteration_on_multiple(self):
         q = PriorityQueue(items=[3, 2, 1, 0])
-        assert [0, 1, 2, 3] == [i for i in q]
+        assert [0, 1, 2, 3] == [i for i in q.items]
 
     def test_contains_on_empty(self):
         q = PriorityQueue()

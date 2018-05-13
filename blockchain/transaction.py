@@ -19,7 +19,8 @@ class Transaction:
             self,
             inputs: List,
             outputs: List,
-            extra_nonce: int = 0
+            extra_nonce: int = 0,
+            hash_f=None
     ):
         self._inputs = inputs
         self._outputs = outputs
@@ -27,6 +28,7 @@ class Transaction:
 
         self._fee = 0
         self._hash = None
+        self._hash_f = hash_f or service.hash_f
         self.update()
 
     @staticmethod
@@ -60,7 +62,7 @@ class Transaction:
         self.update()
 
     def update(self):
-        self._hash = service.hash_f(self.bytes)
+        self._hash = self._hash_f(self.bytes)
 
     def to_proto(self):
         assert 0 <= self._extra_nonce < 2 ** 32, \
