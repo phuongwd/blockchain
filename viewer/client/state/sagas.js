@@ -54,7 +54,7 @@ function* clientSagas() {
   yield all([
     // call(listenWebsockets),
     takeLatest(Actions.REFRESH_REQUESTED, refresh),
-    // put(Actions.refresh()),
+    put(Actions.refresh()),
   ])
 }
 

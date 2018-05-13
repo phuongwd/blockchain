@@ -9,11 +9,11 @@ const NodesPage = ({ nodes }) => {
     <div className='container'>
       <div className='row'>
         <h1 className='col text-center'>
-          Transactions
+          Nodes
         </h1>
       </div>
 
-      <TableOfNodes nodes={nodes}/>
+      {(nodes.length > 0) && <TableOfNodes nodes={nodes}/>}
     </div>
   )
 }

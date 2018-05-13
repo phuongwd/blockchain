@@ -1,6 +1,6 @@
 import React from 'react'
 
-import { Collapse, CardBody, Card, CardHeader } from 'reactstrap'
+import { Collapse, Card, CardHeader } from 'reactstrap'
 
 class Accordion extends React.Component {
   constructor(props) {

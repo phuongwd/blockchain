@@ -30,7 +30,7 @@ $font-family-base: $font-family-default;
 .fade-enter-active {
   opacity: 1;
   z-index: 1;
-  transition: opacity 250ms ease-in;
+  transition: opacity 100ms ease-in;
 }
 
 .mono {
