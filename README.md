@@ -168,7 +168,14 @@ After that, the production app can be started with:
 ./scripts/start
 ```
 
+By default, the app will be served at `http://localhost:3000` (
+this can be changed in `viewer/.env`)
+
+
 #### Running the app in development (debug) mode
+
+Development version of the app, with hot reloading and additinal debugging 
+capabilities, can be started with:
 
 ```
 ./scripts/dev
