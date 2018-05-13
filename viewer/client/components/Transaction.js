@@ -1,9 +1,9 @@
 import React from 'react'
 
+import Accordion from '../components/Accordion'
 import KeyValueTable from './KeyValueTable'
 
-
-const Transaction = ({ transaction }) => {
+const Transaction = ({ transaction, header }) => {
   const fields = [
     {
       key: 'Hash',
@@ -23,8 +23,14 @@ const Transaction = ({ transaction }) => {
     },
   ]
 
+  return (
+    <>
+      <KeyValueTable fields={fields} header={header}/>
 
-  return <KeyValueTable fields={fields}/>
+      {/*<Accordion items={inputs}/>*/}
+      {/*<Accordion items={outputs}/>*/}
+    </>
+  )
 }
 
 export default Transaction

@@ -11,6 +11,8 @@ import faBackward from '@fortawesome/fontawesome-free-solid/faBackward'
 import Block from '../components/Block'
 import Actions from '../state/actions'
 import Transaction from '../components/Transaction'
+import Accordion from '../components/Accordion'
+
 
 const Index = ({ blockIdx, blocks, prevBlock, nextBlock }) => {
   let block = null
@@ -85,14 +87,33 @@ const Index = ({ blockIdx, blocks, prevBlock, nextBlock }) => {
             </h5>
           </div>
 
-          {
-            block && block.transactions &&
-            block.transactions.map((transaction, i) => (
-              <div key={i} className='row'>
-                <Transaction transaction={transaction}/>
-              </div>
-            ))
-          }
+
+          <div className='row'>
+            <div className="col">
+
+              <Accordion items={block.transactions.map((transaction, i) => {
+                let header = `Transaction ${i}`
+                if(i === 0) {
+                  header += ' (coinbase)'
+                }
+
+                return {
+                  header,
+                  body: (<Transaction transaction={transaction} header={false}/>),
+                }
+              })}/>
+
+            </div>
+          </div>
+
+          {/*{*/}
+          {/*block && block.transactions &&*/}
+          {/*block.transactions.map((transaction, i) => (*/}
+          {/*<div key={i} className='row'>*/}
+          {/*<Transaction transaction={transaction}/>*/}
+          {/*</div>*/}
+          {/*))*/}
+          {/*}*/}
         </div>
       </div>
     </div>

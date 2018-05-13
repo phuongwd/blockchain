@@ -33,7 +33,7 @@ const Block = ({ block }) => {
   ]
 
 
-  return <KeyValueTable fields={fields}/>
+  return <KeyValueTable fields={fields} header={true}/>
 }
 
 export default Block

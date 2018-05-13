@@ -15,7 +15,7 @@ const TransactionsPage = ({ transactions }) => {
 
       {
         transactions.map((transaction, i) => (
-          <div key={i} className='row'>
+          <div key={i} className='row col-sm-12 p-2'>
             <Transaction transaction={transaction}/>
           </div>
         ))

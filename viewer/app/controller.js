@@ -65,6 +65,15 @@ class BlockchainController {
     // this._broadcastThrottled(Actions.blocks(blocks))
   }
 
+  addTransactions = (transactions) => {
+    transactions = transactions.map(this._convertTransaction)
+    // const oldLen = this._transactions.length
+    this._transactions = mergeTransactions(this._transactions, transactions)
+    // const newLen = this._transactions.length
+    // console.log('addTransactions: ', oldLen, ' -> ', newLen)
+    // this._broadcastThrottled(Actions.transactions(transactions))
+  }
+
   _convertBlock = (block) => {
     const hash = block.hash.toString('hex')
     const hash_prev = block.hash_prev.toString('hex')
@@ -82,20 +91,35 @@ class BlockchainController {
 
   _convertTransaction = (transaction) => {
     const hash = transaction.hash.toString('hex')
+    const inputs = transaction.inputs.map(this._convertInput)
+    const outputs = transaction.outputs.map(this._convertOutput)
 
     return {
       ...transaction,
       hash,
+      inputs,
+      outputs,
     }
   }
 
-  addTransactions = (transactions) => {
-    transactions = transactions.map(this._convertTransaction)
-    // const oldLen = this._transactions.length
-    this._transactions = mergeTransactions(this._transactions, transactions)
-    // const newLen = this._transactions.length
-    // console.log('addTransactions: ', oldLen, ' -> ', newLen)
-    // this._broadcastThrottled(Actions.transactions(transactions))
+  _convertInput = (input) => {
+    const src_hash = input.src_hash.toString('hex')
+    const signature = input.signature.toString('hex')
+
+    return {
+      ...input,
+      src_hash,
+      signature,
+    }
+  }
+
+  _convertOutput = (input) => {
+    const key = input.key.toString('hex')
+
+    return {
+      ...input,
+      key,
+    }
   }
 }
 

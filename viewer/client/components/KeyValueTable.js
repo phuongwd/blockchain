@@ -2,14 +2,17 @@ import React from 'react'
 import { Table } from 'reactstrap'
 
 
-const KeyValueTable = ({ fields }) => {
+const KeyValueTable = ({ fields, header }) => {
   return (
-    <Table hover striped bordered size="sm">
+    <Table hover bordered size="sm">
       <thead>
-        <tr>
-          <th className={'table-cell-key'}>{'Name'}</th>
-          <th className={'table-cell-value'}>{'Value'}</th>
-        </tr>
+        {
+          header &&
+          <tr>
+            <th className={'table-cell-key'}>{'Name'}</th>
+            <th className={'table-cell-value'}>{'Value'}</th>
+          </tr>
+        }
       </thead>
       <tbody>
         {

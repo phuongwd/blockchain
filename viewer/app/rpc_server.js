@@ -9,7 +9,7 @@ class BlockchainRpcServer {
     this._port = port
 
     // Hardcoded address
-    // (hardcoded address is fine as long as we run only one instance, 
+    // (hardcoded address is fine as long as we run only one instance,
     // also this node does not generate any transactions, so we don't need
     // to bother with keys and signatures)
     this._address = Buffer.from('B4jFTP934QZFEQRsDdrYqfA2J7vZuP1h4')
@@ -32,7 +32,6 @@ class BlockchainRpcServer {
     this._server.bind(`${host}:${port}`, grpc.ServerCredentials.createInsecure())
     console.info(`Listening on port: ${port}`)
     this._server.start()
-
   }
 
   ping = (call, callback) => {
