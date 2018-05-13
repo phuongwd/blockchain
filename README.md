@@ -114,6 +114,26 @@ In order to run all unit tests, run:
 ./scripts/test
 ```
 
+#### Running the DNS seeder node:
+
+DNS seeder is a trusted node, which address is hardcoded by software maintainers
+into all nodes. It provides initial node discovery in order to bootstrap the
+peer-to-peer network.
+
+```
+./scripts/run dns_seeder
+```
+
+
+#### Running the full node:
+
+Full node maintains the blockchain and mines new blocks
+
+```
+./scripts/run full_node <host>:<port>
+```
+
+
 
 ## 2. Viewer
 
