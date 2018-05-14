@@ -7,15 +7,12 @@ from __future__ import (
 
 from unittest import TestCase
 
-from blockchain import TransactionInput
+import blockchain
 
 
 class TestTransactionInput(TestCase):
-    def setUp(self):
-        pass
-
     def test_tx_input_bytes(self):
-        tx_input = TransactionInput(
+        tx_input = blockchain.TransactionInput(
             src_hash=b"hello",
             src_idx=1,
             signature=b"signed_",

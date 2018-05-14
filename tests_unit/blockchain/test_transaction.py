@@ -7,7 +7,7 @@ from __future__ import (
 
 from unittest import TestCase
 
-from blockchain import Transaction
+import blockchain
 from utils import MockConvertibleToBytes, bytes_to_int
 
 Bytes = MockConvertibleToBytes
@@ -18,17 +18,17 @@ class TestTransaction(TestCase):
         pass
 
     def test_tx_reduce_empty(self):
-        assert b"" == Transaction._reduce([])
+        assert b"" == blockchain.Transaction._reduce([])
 
     def test_tx_reduce_list(self):
         inputs = [Bytes(b"one"), Bytes(b"two"), Bytes(b"three")]
-        assert b"onetwothree" == Transaction._reduce(inputs)
+        assert b"onetwothree" == blockchain.Transaction._reduce(inputs)
 
     def test_tx_bytes(self):
         inputs = [Bytes(b"one"), Bytes(b"two"), Bytes(b"three")]
         outputs = [Bytes(b"abc"), Bytes(b"xyz")]
 
-        tx = Transaction(
+        tx = blockchain.Transaction(
             inputs=inputs,
             outputs=outputs,
             hash_f=lambda x: x
@@ -40,7 +40,7 @@ class TestTransaction(TestCase):
         inputs = [Bytes(b"one"), Bytes(b"two"), Bytes(b"three")]
         outputs = [Bytes(b"abc"), Bytes(b"xyz")]
 
-        tx = Transaction(
+        tx = blockchain.Transaction(
             inputs=inputs,
             outputs=outputs,
             hash_f=lambda x: b"(" + x + b")"
@@ -52,7 +52,7 @@ class TestTransaction(TestCase):
         inputs = [Bytes(b"one"), Bytes(b"two"), Bytes(b"three")]
         outputs = [Bytes(b"abc"), Bytes(b"xyz")]
 
-        tx = Transaction(
+        tx = blockchain.Transaction(
             inputs=inputs,
             outputs=outputs,
             hash_f=lambda x: b"(" + x + b")"

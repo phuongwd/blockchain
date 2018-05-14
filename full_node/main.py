@@ -8,7 +8,8 @@ from __future__ import (
 import os
 import sys
 
-from blockchain_rpc import Peer, NodeFull
+from blockchain_rpc import Peer
+from blockchain_rpc.node_full import NodeFull
 from utils import dict_to_namedtuple, Verbosity
 from utils.console import Console
 

@@ -21,6 +21,6 @@ from .transaction import Transaction
 from .constants import constants
 from .transaction_strategies import favor_higher_fees
 from .merkle_tree import MerkleTree
-from .block import Block
 from .transaction_generator import TransactionGenerator
 from .transaction_generator_fake import TransactionGeneratorFake
+from .block import Block

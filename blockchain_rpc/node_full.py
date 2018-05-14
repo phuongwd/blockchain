@@ -15,6 +15,7 @@ from typing import Iterable
 
 import blockchain
 import blockchain_rpc
+from blockchain_rpc.node_base import NodeBase
 from blockchain import constants
 from blockchain.transaction_strategies import favor_higher_fees
 from utils import PriorityQueue, int_to_bytes, bin_str, bytes_to_int, console
@@ -22,7 +23,7 @@ from utils import PriorityQueue, int_to_bytes, bin_str, bytes_to_int, console
 service = blockchain_rpc.Service()
 
 
-class NodeFull(blockchain_rpc.NodeBase):
+class NodeFull(NodeBase):
     def __init__(self, config):
         """
         Implements full node that not only tracks other nodes, but also

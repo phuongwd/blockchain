@@ -5,11 +5,9 @@ from __future__ import (
     absolute_import, division, print_function, unicode_literals
 )
 
-import binascii
 from unittest import TestCase
 
-from blockchain import ECDSA
-from utils import bin_to_hex
+import blockchain
 
 
 class TestECDSA(TestCase):
@@ -18,7 +16,7 @@ class TestECDSA(TestCase):
     """
 
     def setUp(self):
-        self.ecdsa = ECDSA(
+        self.ecdsa = blockchain.ECDSA(
             "../.tmp/unit_tests"
         )
 
@@ -26,4 +24,4 @@ class TestECDSA(TestCase):
         message = "Hello, world!".encode("utf-8")
         signature = self.ecdsa.sign(message)
         public_key = self.ecdsa.public_key
-        assert ECDSA.verify(public_key, signature, message)
+        assert blockchain.ECDSA.verify(public_key, signature, message)

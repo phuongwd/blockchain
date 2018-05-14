@@ -81,6 +81,14 @@ rm -rf .bc .data .conda .tmp
 scripts/install
 ```
 
+`scrypt` package requires OpenSSL headers and library to be installed.
+On Ubuntu it can be installed with:
+
+```
+sudo apt-get install libssl-dev
+```
+
+
 ##### Configuring the environment
 
 Nodes use the settings read from the file `.env` in the root directory. The default configuration example is provided in `.env.defaults`

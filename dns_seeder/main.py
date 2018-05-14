@@ -7,7 +7,7 @@ from __future__ import (
 
 import os
 
-from blockchain_rpc import NodeBase
+from blockchain_rpc.node_base import NodeBase
 from utils import dict_to_namedtuple, Verbosity
 from utils.console import Console
 

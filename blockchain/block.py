@@ -8,7 +8,6 @@ from __future__ import (
 from typing import List
 
 import blockchain
-from blockchain import MerkleTree, constants
 from blockchain_rpc import Service
 
 from utils import (
@@ -82,7 +81,7 @@ class Block:
 
     def update_merkle_tree(self):
         # Recompute the tree of transactions
-        merkle_tree = MerkleTree(
+        merkle_tree = blockchain.MerkleTree(
             leaves=[tx.hash for tx in self._transactions],
             f_hash=lambda tx: service.hash_f(tx)
         )
@@ -113,7 +112,7 @@ class Block:
         ]
 
         # Block should contain at least 1 transaction: a coinbase transaction
-        if 1 < len(transactions) < constants.BLOCK_MAX_TRANSACTIONS:
+        if 1 < len(transactions) < blockchain.constants.BLOCK_MAX_TRANSACTIONS:
             return None
 
         extra_nonce = proto.transactions[0].extra_nonce
