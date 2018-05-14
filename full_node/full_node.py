@@ -37,7 +37,6 @@ class FullNode(blockchain_rpc.BlockchainNode):
 
         # Producer-consumer queues for exchanging data with the mining thread
         self._transaction_queue = PriorityQueue(f_priority=favor_higher_fees)
-        self._block_queue = Queue()
 
         self._mining = config.mining
 
