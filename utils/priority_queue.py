@@ -56,7 +56,7 @@ class PriorityQueue:
         with self._lock:
             try:
                 self._q.queue.remove(_PriorityQueueItem(item, self._f_priority))
-                console.info("removing transaction")
+                console.debug("removing transaction")
             except ValueError:
                 pass
 

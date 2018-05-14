@@ -53,7 +53,6 @@ class Navigation extends React.Component {
   }
 
   toggleTab = (tab) => {
-    console.log(tab)
     if(this.state.activeTab !== tab) {
       this.setState({
         activeTab: tab,

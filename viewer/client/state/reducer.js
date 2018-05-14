@@ -76,7 +76,7 @@ const reducer = (state = stateDefault, action) => {
     const blocks = mergeNewData(state, action, 'blocks', mergeBlocks)
     const transactions = mergeNewData(state, action, 'transactions', mergeTransactions)
 
-    console.log(action)
+    // console.log(action)
 
     return {
       ...state,
