@@ -33,17 +33,12 @@ class Block:
         self._difficulty = difficulty
         self._target = create_target(service.hash_f.bits, difficulty)
         self._transactions = transactions
-
-        # Data to be computed
         self._nonce = nonce
+        self.extra_nonce = extra_nonce
         self._hash = hash
         self._merkle_root = merkle_root
         self._merkle_tree = None
         self._bytes = None
-
-        # FIXME: invalidates blocks incoming from proto
-        # Set first extra nonce (triggers update)
-        self.extra_nonce = 0
 
     @property
     def difficulty(self):
@@ -112,7 +107,6 @@ class Block:
 
     @staticmethod
     def from_proto(proto):
-        # TODO: validate the incoming block
         transactions = [
             blockchain.Transaction.from_proto(tx)
             for tx in proto.transactions
@@ -122,28 +116,16 @@ class Block:
         if 1 < len(transactions) < constants.BLOCK_MAX_TRANSACTIONS:
             return None
 
-        incoming_nonce = proto.nonce
-        incoming_difficulty = proto.difficulty
-        incoming_hash_prev = proto.hash_prev
-
-        # incoming_extra_nonce = transactions[0].extra_nonce
-        # incoming_hash = proto.hash
-        # incoming_merkle_root = proto.merkle_root
-
-        # TODO: Ensure difficulty is correct
-        # TODO: Ensure hash < target
-        # TODO: Ensure hash_prev exists
-
-        # TODO: Verify transactions:
-        # TODO: - Ensure transactions inputs and outputs exist
-        # TODO: - Ensure transactions not overspend
-        # TODO: - Prevent double-spend
+        extra_nonce = proto.transactions[0].extra_nonce
 
         block = Block(
-            hash_prev=incoming_hash_prev,
-            difficulty=incoming_difficulty,
-            transactions=transactions,
-            nonce=incoming_nonce
+            hash=proto.hash,
+            hash_prev=proto.hash_prev,
+            difficulty=proto.difficulty,
+            nonce=proto.nonce,
+            extra_nonce=extra_nonce,
+            merkle_root=proto.merkle_root,
+            transactions=transactions
         )
 
         return block
