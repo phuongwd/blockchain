@@ -15,6 +15,9 @@ service = Service()
 
 
 class Transaction:
+    """
+    Implements a single transaction within the block
+    """
     def __init__(
             self,
             inputs: List,
@@ -33,6 +36,9 @@ class Transaction:
 
     @staticmethod
     def _reduce(arr):
+        """
+        Converts every array elelemt to bytes and concatenates the results
+        """
         return reduce(
             lambda x, y: x + y,
             map(lambda x: x.bytes, arr),
@@ -41,6 +47,9 @@ class Transaction:
 
     @property
     def bytes(self):
+        """
+        Converts everything to bytes and concatenates together
+        """
         return self._reduce(self._inputs) + self._reduce(self._outputs) \
                + bytes([self.extra_nonce])
 

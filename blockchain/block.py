@@ -24,7 +24,10 @@ class Block:
             hash_prev: bytes,
             difficulty: int,
             transactions: List,
-            nonce: int = 0
+            nonce: int = 0,
+            extra_nonce: int = 0,
+            hash: bytes = None,
+            merkle_root=None
     ):
         self._hash_prev = hash_prev
         self._difficulty = difficulty
@@ -33,8 +36,8 @@ class Block:
 
         # Data to be computed
         self._nonce = nonce
-        self._hash = None
-        self._merkle_root = None
+        self._hash = hash
+        self._merkle_root = merkle_root
         self._merkle_tree = None
         self._bytes = None
 
@@ -67,20 +70,22 @@ class Block:
         return self._transactions[0]
 
     @property
+    def transactions(self):
+        return self._transactions
+
+    @property
     def extra_nonce(self) -> int:
         return self.coinbase_transaction.extra_nonce
 
     @extra_nonce.setter
     def extra_nonce(self, extra_nonce: int) -> None:
         self._transactions[0].extra_nonce = extra_nonce
-        self._nonce = 0
-        self._update()
 
     @property
     def merkle_root(self):
         return self._merkle_root
 
-    def _update(self):
+    def update_merkle_tree(self):
         # Recompute the tree of transactions
         merkle_tree = MerkleTree(
             leaves=[tx.hash for tx in self._transactions],
@@ -177,6 +182,13 @@ class Block:
         return self.details
 
     def mine_one(self):
+        # Increment extra nonce if nonce overflows and update merkle tree
+        if self._nonce == 0 or self._nonce >= 2 ** 32 - 1:
+            self.extra_nonce += 1
+            self._nonce = 0
+            self.update_merkle_tree()
+
+        # Calculate hash with current nonce and extra_nonce
         curr_hash = service.hash_f(self._bytes + int_to_bytes(self._nonce))
 
         # If target is meet, we found the nonce
@@ -186,10 +198,5 @@ class Block:
 
         # If target is not met proceed with the next nonce on next call
         self._nonce += 1
-
-        # Increment extra nonce if nonce overflows
-        if self._nonce >= 2 ** 32 - 1:
-            self.extra_nonce += 1
-            self._nonce = 0
 
         return False, self._nonce, curr_hash

@@ -12,14 +12,20 @@ service = blockchain_rpc.Service()
 
 
 class TransactionInput:
-    def __init__(self, src_hash: bytes, src_idx: int, signature: bytes):
+    """
+    Implements a single input within a transaction
+    """
+    def __init__(self, src_hash: bytes, src_idx: int, signature: bytes,
+                 key: bytes):
         self._src_hash = src_hash
         self._src_idx = src_idx
         self._signature = signature
+        self._key = key
 
     @property
     def bytes(self):
-        return self._src_hash + int_to_bytes(self._src_idx) + self._signature
+        return self._src_hash + int_to_bytes(
+            self._src_idx) + self._signature + self._key
 
     @property
     def src_hash(self):
@@ -38,16 +44,14 @@ class TransactionInput:
         return TransactionInput(
             src_hash=proto.src_hash,
             src_idx=proto.src_idx,
-            signature=proto.signature
+            signature=proto.signature,
+            key=proto.key
         )
 
     def to_proto(self):
-        try:
-            return service.messages.TransactionInput(
-                src_hash=int_to_bytes(0),
-                src_idx=0,
-                signature=int_to_bytes(0)
-            )
-        except:
-            print(self)
-            exit(0)
+        return service.messages.TransactionInput(
+            src_hash=self._src_hash,
+            src_idx=0,
+            signature=self._signature,
+            key=self._key
+        )

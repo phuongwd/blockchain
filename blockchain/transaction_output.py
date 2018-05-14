@@ -12,6 +12,10 @@ service = Service()
 
 
 class TransactionOutput:
+    """
+    Implements a single output within a transaction
+    """
+
     def __init__(self, amount: int, key: bytes):
         self._amount = amount
         self._key = key

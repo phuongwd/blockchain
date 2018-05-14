@@ -40,9 +40,11 @@ def main():
         "block_discovery_interval": 5,
         "block_sharing_interval": 5,
         "max_workers": 3,
-        "difficulty": 8,
+        "difficulty": 10,
         "mining_throttle_ms": 10,
-        "key_path": "../.data/{:}_{:}/ecdsa_secp256k1.pem".format(host, port)
+        "key_path": "../.data/{:}_{:}/ecdsa_secp256k1.pem".format(host, port),
+        "mining": True,
+        "gen_transactions": True
     })
 
     # Console.verbosity = Verbosity.debug

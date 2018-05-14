@@ -8,15 +8,15 @@ from __future__ import (
 import random
 import sys
 import time
+from _thread import interrupt_main
 from queue import Queue
-from threading import Timer, Thread
+from threading import Timer, Thread, Condition
 from typing import Iterable
 
 import blockchain
 import blockchain_rpc
 from blockchain import constants
 from blockchain.transaction_strategies import favor_higher_fees
-from blockchain.fake_transaction_generator import FakeTransactionGenerator
 from utils import PriorityQueue, int_to_bytes, bin_str, bytes_to_int, console
 
 service = blockchain_rpc.Service()
@@ -29,58 +29,85 @@ class FullNode(blockchain_rpc.BlockchainNode):
         maintains full blockchain, accepts transactions and mines new blocks.
         """
         super(FullNode, self).__init__(config)
-
-        self._blockchain = set()
-
-        self._public_key = int_to_bytes(random.randint(0, sys.maxsize))
-
-        self._hash_prev = int_to_bytes(0)
+        self._hash_prev = None
         self._difficulty = config.difficulty
         self._mining_throttle_ms = config.mining_throttle_ms
+
+        self._blockchain = set()
 
         # Producer-consumer queues for exchanging data with the mining thread
         self._transaction_queue = PriorityQueue(f_priority=favor_higher_fees)
         self._block_queue = Queue()
 
-        self._mining = True
+        self._mining = config.mining
 
-        # Launch mining thread (consumes transactions, produces blocks)
-        Thread(target=self.mine, name="mine").start()
+        # Launch mining and block and transaction discovery
+        if self._mining:
+            Thread(target=self.mine, name="mine").start()
 
-        # Launch transaction generating thread (produces transactions)
-        Thread(target=self.generate_transactions,
-               name="generate_transactions").start()
+            Thread(target=self.discover_blocks).start()
 
-        # Launch discovery/sharing services
-        Thread(target=self.discover_blocks,
-               name="discover_blocks").start()
+            Thread(target=self.share_blocks).start()
 
-        Thread(target=self.share_blocks,
-               name="share_blocks").start()
+            Thread(target=self.discover_transactions).start()
 
-        Thread(target=self.discover_transactions,
-               name="discover_transactions").start()
+        # Launch transaction generating and sharing
+        if self._mining or config.gen_transactions:
+            Thread(target=self.generate_transactions).start()
 
-        Thread(target=self.share_transactions,
-               name="share_transactions").start()
+            Thread(target=self.share_transactions).start()
+
+    def add_genesis_block(self):
+        """
+        Assembles genesis block, the first block in the blockchain.
+        It is hardcoded and the same for every mining node.
+        """
+        coinbase_transaction = self.create_coinbase_transaction(
+            dest_key=constants.GENESIS_BLOCK_DEST_KEY
+        )
+
+        transactions = [coinbase_transaction]
+
+        genesis_block = blockchain.Block(
+            hash_prev=constants.GENESIS_BLOCK_HASH_PREV,
+            difficulty=constants.GENESIS_BLOCK_DIFFICULTY,
+            hash=constants.GENESIS_BLOCK_HASH,
+            merkle_root=constants.GENESIS_BLOCK_MERKLE_ROOT,
+            nonce=constants.GENESIS_BLOCK_NONCE,
+            extra_nonce=constants.GENESIS_BLOCK_EXTRA_NONCE,
+            transactions=transactions
+        )
+
+        self._hash_prev = genesis_block.hash
+        self._blockchain.add(genesis_block)
 
     def generate_transactions(self):
-        transaction_generator = FakeTransactionGenerator()
+        """
+        Generates random transactions
+        """
 
-        for _ in range(5):
-            transaction = transaction_generator.generate()
-            self._transaction_queue.put(transaction)
+        transaction_generator = blockchain.TransactionGeneratorFake(
+            blocks=self._blockchain,
+            peers=self._known_peers,
+            ecdsa=self._ecdsa
+        )
 
-        while self._mining:
-            if len(self._transaction_queue.items) < 15:
+        while True:
+            if len(self._transaction_queue.items) \
+                    < constants.BLOCK_MAX_TRANSACTIONS:
                 transaction = transaction_generator.generate()
                 self._transaction_queue.put(transaction)
             time.sleep(3)
 
-    def create_coinbase_transaction(self):
+    def create_coinbase_transaction(self, dest_key=None):
+        """
+        Creates a coinbase transaction. This transaction is included as the
+        first transaction of the block and is creating a fixed amount of coins
+        """
+
         coinbase_output = blockchain.TransactionOutput(
             amount=constants.BLOCK_COINBASE_AMOUNT,
-            key=self._public_key
+            key=dest_key or self._ecdsa.public_key
         )
 
         coinbase_tx = blockchain.Transaction(
@@ -95,7 +122,8 @@ class FullNode(blockchain_rpc.BlockchainNode):
         Mines new blocks
         """
 
-        i = 0
+        self.add_genesis_block()
+
         while self._mining:
             coinbase_transaction = self.create_coinbase_transaction()
             transactions = [coinbase_transaction]
@@ -122,15 +150,9 @@ class FullNode(blockchain_rpc.BlockchainNode):
                 # Throttle mining to reduce CPU load (for the demo)
                 time.sleep(self._mining_throttle_ms / 1000)
 
-            i += 1
-
-            if i > 3:
-                self._mining = False
-                print("Not mining")
-
     def mine_one_iteration(self, block: blockchain.Block):
         """
-        Perform one iteration of a block mining (increments nonce once)
+        Perform one iteration of block mining (increments the nonce once)
         """
 
         found, nonce, curr_hash = block.mine_one()

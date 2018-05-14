@@ -5,20 +5,17 @@ from __future__ import (
     absolute_import, division, print_function, unicode_literals
 )
 
-import hashlib
-import os
 import time
 from threading import Lock, Thread
 from concurrent import futures
 from queue import Queue
 from typing import Iterable
 
-import base58
-import ecdsa
 import grpc
 
+import blockchain
 import blockchain_rpc
-from utils import wait_forever, console, ensure_dir
+from utils import wait_forever, console
 
 service = blockchain_rpc.Service()
 
@@ -38,10 +35,11 @@ class BlockchainNode(service.Servicer):
         self._server.add_insecure_port(
             "{:}:{:}".format(config.host, config.port))
 
-        self.create_keys_and_address()
+        self._ecdsa = blockchain.ECDSA(self._config.key_path)
 
         self._this_node = blockchain_rpc.Peer(
-            host=config.host, port=config.port, address=self._address)
+            host=config.host, port=config.port, address=self._ecdsa.address
+        )
 
         self._known_peers = set()
         self._known_peers_lock = Lock()
@@ -52,30 +50,6 @@ class BlockchainNode(service.Servicer):
         # Launch discovery/sharing services
         Thread(target=self.discover_peers, name="discover_peers").start()
         Thread(target=self.share_peers, name="share_peers").start()
-
-    def create_keys_and_address(self):
-        key_path = self._config.key_path
-        ensure_dir(os.path.dirname(key_path))
-
-        # Generate or read the private key
-        if os.path.exists(key_path):
-            with open(key_path, 'rb') as f:
-                self._private_key = ecdsa.SigningKey.from_string(
-                    f.read(), curve=ecdsa.SECP256k1
-                )
-        else:
-            self._private_key = ecdsa.SigningKey.generate(curve=ecdsa.SECP256k1)
-            with open(key_path, 'wb') as f:
-                f.write(self._private_key.to_string())
-
-        # Retrieve public key
-        self._public_key = self._private_key.get_verifying_key()
-
-        # Generate address from public key
-        addr = hashlib.new('sha256', self._public_key.to_string()).digest()
-        addr = hashlib.new('ripemd160', addr).digest()
-        addr = base58.b58encode_check(bytes(addr))
-        self._address = addr
 
     def start(self):
         """

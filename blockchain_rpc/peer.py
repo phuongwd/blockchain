@@ -69,7 +69,7 @@ class Peer:
         s = "{:}:{:}".format(self.host, self.port)
 
         if self.address is not None:
-            s += "/{:}".format(self.address)
+            s += "/{:}".format(self.address.decode("utf-8")[:7])
 
         return s
 

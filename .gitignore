@@ -167,3 +167,4 @@ typings/
 .bc/
 .conda/
 .tmp/
+.data/

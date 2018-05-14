@@ -18,7 +18,8 @@ class TestTransactionInput(TestCase):
         tx_input = TransactionInput(
             src_hash=b"hello",
             src_idx=1,
-            signature=b"signed"
+            signature=b"signed_",
+            key=b"with_key"
         )
 
-        assert b"hello\x01signed" == tx_input.bytes
+        assert b"hello\x01signed_with_key" == tx_input.bytes

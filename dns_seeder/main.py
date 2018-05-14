@@ -26,7 +26,9 @@ def main():
         "peer_discovery_interval": 3,
         "peer_sharing_interval": 3,
         "max_workers": 3,
-        "key_path": "../.data/{:}_{:}/ecdsa_secp256k1.pem".format(host, port)
+        "key_path": "../.data/{:}_{:}/ecdsa_secp256k1.pem".format(host, port),
+        "mining": False,
+        "gen_transactions": False
     })
 
     # Console.verbosity = Verbosity.debug

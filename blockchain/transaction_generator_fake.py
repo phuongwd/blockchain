@@ -19,9 +19,13 @@ from utils import int_to_bytes
 service = Service()
 
 
-class FakeTransactionGenerator:
-    def __init__(self):
-        pass
+class TransactionGeneratorFake:
+    """
+    Generates fake transactions that do not verify signatures or amounts spend
+    """
+
+    def __init__(self, blocks, peers, ecdsa):
+        self._ecdsa = ecdsa
 
     def generate(self):
         inputs = \
@@ -33,6 +37,7 @@ class FakeTransactionGenerator:
                         0, constants.TRANSACTION_MAX_OUTPUTS),
                     signature=int_to_bytes(
                         random.randint(0, sys.maxsize)),
+                    key=self._ecdsa.public_key
                 )
                 for _ in range(constants.TRANSACTION_MAX_INPUTS)
             ]

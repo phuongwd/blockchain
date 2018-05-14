@@ -33,15 +33,16 @@ message Node {
 // block, which creates coins by itself and requires no inputs.
 message TransactionInput {
     bytes src_hash = 1; // hash of the source transaction
-    int32 src_idx = 2; // index of the output in source the source transaction
+    int32 src_idx = 2; // index of the output in the source transaction
     bytes signature = 3; // crypto-signature of the owner
+    bytes key = 4; // public key confirming the signature
 }
 
 // Represents an output of a transaction.
 // Output of a transaction can be spent by becoming an input of a transaction
 // further in the blockchain
 message TransactionOutput {
-    int32 amount = 1; // amount of coins to transfer
+    uint64 amount = 1; // amount of coins to transfer
     bytes key = 2; // public key which confirms the ownership
 }
 
