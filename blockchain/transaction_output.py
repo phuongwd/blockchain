@@ -44,3 +44,6 @@ class TransactionOutput:
             amount=self.amount,
             key=self.key
         )
+
+    def __eq__(self, other):
+        return self._amount == other._amount and self._key == other._key

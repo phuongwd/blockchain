@@ -7,7 +7,7 @@ from __future__ import (
 
 import os
 
-from dns_seeder import DNSSeeder
+from blockchain_rpc import NodeBase
 from utils import dict_to_namedtuple, Verbosity
 from utils.console import Console
 
@@ -22,18 +22,18 @@ def main():
     config = dict_to_namedtuple({
         "host": host,
         "port": port,
+        "mining": False,
+        "gen_transactions": False,
         "known_peers": [],
         "peer_discovery_interval": 3,
         "peer_sharing_interval": 3,
         "max_workers": 3,
         "key_path": "../.data/{:}_{:}/ecdsa_secp256k1.pem".format(host, port),
-        "mining": False,
-        "gen_transactions": False
     })
 
     # Console.verbosity = Verbosity.debug
 
-    dns_seeder = DNSSeeder(config)
+    dns_seeder = NodeBase(config)
     dns_seeder.listen()
 
 

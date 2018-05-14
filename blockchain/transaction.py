@@ -18,6 +18,7 @@ class Transaction:
     """
     Implements a single transaction within the block
     """
+
     def __init__(
             self,
             inputs: List,
@@ -101,3 +102,8 @@ class Transaction:
             outputs=outputs,
             extra_nonce=proto.extra_nonce
         )
+
+    def __eq__(self, other):
+        return self._inputs == other._inputs \
+               and self._outputs == other._outputs \
+               and self._extra_nonce == other._extra_nonce

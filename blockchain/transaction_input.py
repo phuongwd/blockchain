@@ -15,6 +15,7 @@ class TransactionInput:
     """
     Implements a single input within a transaction
     """
+
     def __init__(self, src_hash: bytes, src_idx: int, signature: bytes,
                  key: bytes):
         self._src_hash = src_hash
@@ -55,3 +56,9 @@ class TransactionInput:
             signature=self._signature,
             key=self._key
         )
+
+    def __eq__(self, other):
+        return self._src_hash == other._src_hash \
+               and self._src_idx == other._src_idx \
+               and self._signature == other._signature \
+               and self._key == other._key

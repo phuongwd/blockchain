@@ -22,17 +22,14 @@ from utils import PriorityQueue, int_to_bytes, bin_str, bytes_to_int, console
 service = blockchain_rpc.Service()
 
 
-class FullNode(blockchain_rpc.BlockchainNode):
+class NodeFull(blockchain_rpc.NodeBase):
     def __init__(self, config):
         """
         Implements full node that not only tracks other nodes, but also
         maintains full blockchain, accepts transactions and mines new blocks.
         """
-        super(FullNode, self).__init__(config)
+        super(NodeFull, self).__init__(config)
         self._hash_prev = None
-        self._difficulty = config.difficulty
-        self._mining_throttle_ms = config.mining_throttle_ms
-
         self._blockchain = set()
 
         # Producer-consumer queues for exchanging data with the mining thread
@@ -44,17 +41,17 @@ class FullNode(blockchain_rpc.BlockchainNode):
         if self._mining:
             Thread(target=self.mine, name="mine").start()
 
-            Thread(target=self.discover_blocks).start()
-
-            Thread(target=self.share_blocks).start()
-
-            Thread(target=self.discover_transactions).start()
-
         # Launch transaction generating and sharing
-        if self._mining or config.gen_transactions:
+        if config.gen_transactions:
             Thread(target=self.generate_transactions).start()
 
-            Thread(target=self.share_transactions).start()
+        Thread(target=self.discover_blocks).start()
+
+        Thread(target=self.share_blocks).start()
+
+        Thread(target=self.discover_transactions).start()
+
+        Thread(target=self.share_transactions).start()
 
     def add_genesis_block(self):
         """
@@ -78,7 +75,30 @@ class FullNode(blockchain_rpc.BlockchainNode):
         )
 
         self._hash_prev = genesis_block.hash
-        self._blockchain.add(genesis_block)
+        self.maybe_add_block(genesis_block)
+
+    def maybe_add_block(self, block):
+        for transaction in block.transactions:
+            self._transaction_queue.remove(transaction)
+
+        self._blockchain.add(block)
+
+    def maybe_add_transaction(self, transaction):
+        transactions = [
+            tx
+            for block in list(self._blockchain)
+            for tx in list(block.transactions)
+        ]
+
+        # Skip adding transaction that is already in the blockchain
+        if transaction in transactions:
+            return
+
+        # Skip adding transaction that is already queued
+        if transaction in self._transaction_queue.items:
+            return
+
+        self._transaction_queue.put(transaction)
 
     def generate_transactions(self):
         """
@@ -92,11 +112,12 @@ class FullNode(blockchain_rpc.BlockchainNode):
         )
 
         while True:
-            if len(self._transaction_queue.items) \
-                    < constants.BLOCK_MAX_TRANSACTIONS:
+            if len(self._transaction_queue.items) < 10:
+                console.debug("generating transaction")
                 transaction = transaction_generator.generate()
-                self._transaction_queue.put(transaction)
-            time.sleep(3)
+                self.maybe_add_transaction(transaction)
+            else:
+                time.sleep(3)
 
     def create_coinbase_transaction(self, dest_key=None):
         """
@@ -134,7 +155,7 @@ class FullNode(blockchain_rpc.BlockchainNode):
 
             block = blockchain.Block(
                 hash_prev=self._hash_prev,
-                difficulty=self._difficulty,
+                difficulty=self._config.difficulty,
                 transactions=transactions,
             )
 
@@ -147,7 +168,7 @@ class FullNode(blockchain_rpc.BlockchainNode):
             while not found:
                 found = self.mine_one_iteration(block)
                 # Throttle mining to reduce CPU load (for the demo)
-                time.sleep(self._mining_throttle_ms / 1000)
+                time.sleep(self._config.mining_throttle_ms / 1000)
 
     def mine_one_iteration(self, block: blockchain.Block):
         """
@@ -164,7 +185,7 @@ class FullNode(blockchain_rpc.BlockchainNode):
         if found:
             console.info("Found a new block:" + " " * 32 + "\n{:}\n".format(
                 block.details))
-            self._blockchain.add(block)
+            self.maybe_add_block(block)
             self._hash_prev = block.hash
 
         return found
@@ -176,7 +197,7 @@ class FullNode(blockchain_rpc.BlockchainNode):
                 for peer in known_peers:
                     transactions = peer.get_transactions()
                     for transaction in transactions:
-                        self._transaction_queue.put(transaction)
+                        self.maybe_add_transaction(transaction)
                 time.sleep(self._config.transaction_discovery_interval)
 
     def share_transactions(self):
@@ -195,7 +216,7 @@ class FullNode(blockchain_rpc.BlockchainNode):
                 for peer in known_peers:
                     blocks = peer.get_blocks()
                     for block in blocks:
-                        self._blockchain.add(block)
+                        self.maybe_add_block(block)
                 time.sleep(self._config.block_discovery_interval)
 
     def share_blocks(self):
@@ -224,7 +245,7 @@ class FullNode(blockchain_rpc.BlockchainNode):
         for transaction in transactions:
             transaction = blockchain.Transaction.from_proto(transaction)
             if transaction is not None:
-                self._transaction_queue.put(transaction)
+                self.maybe_add_transaction(transaction)
 
         return service.messages.Empty()
 
@@ -243,6 +264,6 @@ class FullNode(blockchain_rpc.BlockchainNode):
         for block in blocks:
             block = blockchain.Block.from_proto(block)
             if block is not None:
-                self._blockchain.add(block)
+                self.maybe_add_block(block)
 
         return service.messages.Empty()

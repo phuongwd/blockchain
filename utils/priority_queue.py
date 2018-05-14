@@ -9,6 +9,8 @@ from queue import Empty, PriorityQueue as BuiltinPriorityQueue
 from threading import Lock
 from typing import Iterable, Callable, TypeVar
 
+from utils import console
+
 T = TypeVar('T')
 
 
@@ -49,6 +51,14 @@ class PriorityQueue:
     def items(self):
         with self._lock:
             return list([i.item for i in self._q.queue])
+
+    def remove(self, item):
+        with self._lock:
+            try:
+                self._q.queue.remove(_PriorityQueueItem(item, self._f_priority))
+                console.info("removing transaction")
+            except ValueError:
+                pass
 
     def put(self, item: T):
         # Wrap the item into priority item with a custom comparison function

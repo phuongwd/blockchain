@@ -20,12 +20,12 @@ from utils import wait_forever, console
 service = blockchain_rpc.Service()
 
 
-class BlockchainNode(service.Servicer):
+class NodeBase(service.Servicer):
     def __init__(self, config):
         """
         Base class for servers that implement blockchain service
         """
-        super(BlockchainNode, self).__init__()
+        super(NodeBase, self).__init__()
         self._config = config
         self._host = config.host
         self._port = int(config.port)
