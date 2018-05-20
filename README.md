@@ -1,7 +1,6 @@
 # Project: Blockchain
 
-AKSAMENTOV Ivan
-DINTE Maria
+AKSAMENTOV Ivan, DINTE Maria
 
 University of Strasbourg, 2018
 
